@@ -1,0 +1,7 @@
+chrome-check-*/
+chrome-debug-profile*/
+chrome-debug.log
+debug-runtime.html
+dom-debug.txt
+.DS_Store
+Thumbs.db

@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+const load = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
+test('employee UI source contains no replacement-character text', async () => assert.doesNotMatch(await load('src/app.js'), /\uFFFD/));
+test('basic fields are read-only where required', async () => { const app = await load('src/app.js'); assert.match(app, /readonlyBasicFields = new Set\(\['alias', 'phone', 'socialSecurityLocation'\]\)/); assert.match(app, /rows\(\{ fields \}, \{ \.\.\.data, idNo: maskId/); });
+test('identity and household fields use different forms', async () => { const app = await load('src/app.js'); assert.match(app, /identityFields = new Set\(\['name', 'gender', 'idType', 'idNo', 'birthDate', 'ethnicity', 'nativePlace'\]\)/); assert.match(app, /householdFields = new Set\(\['householdBook', 'householdType', 'householdAddress', 'maritalStatus', 'marriageDate'\]\)/); assert.match(app, /upload\('household-book'/); });
+test('education includes highest-degree option', async () => assert.match(await load('src/app.js'), /highestDegree: '\\u662f\\u5426\\u6700\\u9ad8\\u5b66\\u5386'/));
+test('home summary uses the requested default fields and masks', async () => { const app = await load('src/app.js'); assert.match(app, /'alias', 'name', 'gender', 'birthDate', 'idNo', 'ethnicity', 'nativePlace', 'phone'/); assert.doesNotMatch(app, /defaults = new Set\([^\n]*'socialSecurityLocation'/); assert.match(app, /function maskBankCard/); assert.match(app, /function ageOf/); });

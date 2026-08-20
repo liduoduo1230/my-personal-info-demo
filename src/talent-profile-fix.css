@@ -1,0 +1,52 @@
+.app.single-page{background:#f7f2e8}
+.single-page .nav{height:56px;padding-top:12px;background:#fff}
+.single-page .landscape-hero{height:108px}
+.single-page .profile-shell{margin-top:-58px}
+.profile.talent-profile-card{min-height:158px;margin:0;padding:12px 18px 14px;background:#fff!important;color:var(--woye)!important;gap:0;align-items:center}
+.profile.talent-profile-card h2{color:var(--woye);font-size:19px}
+.talent-profile-card .profile-main p{color:var(--muted)!important;margin:1px 0;font-size:12px}
+.talent-profile-card .profile-main small{color:var(--muted)!important;margin-top:2px}
+.profile.talent-profile-card .avatar{width:56px;height:56px;margin:0 auto 6px}
+.single-page .profile-anchor-nav{top:56px;padding-top:10px;background:rgba(247,242,232,.98)}
+.module-card{padding:14px 14px 12px}
+.module-card .record-card{margin:8px 0 14px;padding:42px 14px 52px;background:#fffdf9;border:1px solid #e2d7c8;border-radius:12px;overflow:hidden}
+.module-card .record-card:not(.pending-add):not(.pending-edit):not(.pending-delete){padding-top:10px}
+.module-card .record-card .data-row{padding:12px 0;gap:12px}
+.module-card .record-card .data-row span:last-child{min-width:0;overflow-wrap:anywhere}
+.record-card .record-status{top:10px;right:12px;z-index:1}
+.record-card .request-actions{left:0;right:0;bottom:0;min-height:44px;padding:0 10px;border-top:1px solid #eee4d8;background:#fbf7f0;align-items:center}
+.record-card .request-actions button{min-height:43px}
+.record-card .pending-view{position:static;margin-left:auto}
+.module-card .add-btn{margin:2px 0 4px;border-color:#c9a679;background:#fffdf9}
+.multi-record-module{background:transparent;box-shadow:none;padding:0}
+.multi-record-module .module-head{padding:0 4px 6px}
+.multi-record-module .record-card-list{display:grid;gap:12px}
+.multi-record-module .record-card{margin:0;padding:42px 14px 14px;background:#fff;border:1px solid #eadfd3;box-shadow:0 4px 14px rgba(59,52,49,.06)}
+.multi-record-module .record-card:not(.pending-add):not(.pending-edit):not(.pending-delete){padding-top:42px;padding-bottom:14px}
+.multi-record-module .record-edit{top:8px;right:8px;bottom:auto;min-height:32px;padding:0 8px}
+.multi-record-module .add-btn{margin-top:12px}
+.multi-record-module .record-summary-card{position:relative;min-height:108px;padding:18px 34px 16px 22px;cursor:pointer;overflow:hidden}
+.record-summary-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:8px;background:#efe3cd;border-radius:12px 0 0 12px}
+.record-summary{display:flex;flex-direction:column;gap:3px}
+.record-time{color:#8f959e;font-size:11px;line-height:18px}
+.record-subtitle{color:#646a73;font-size:12px;line-height:18px}
+.record-primary{color:#3b3431;font-size:14px;line-height:22px;font-weight:600}
+.record-chevron{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#b6ada4;font-size:18px}
+.multi-record-module .record-summary-card.pending-add,.multi-record-module .record-summary-card.pending-delete{padding-top:42px}
+.multi-record-module .record-summary-card .record-status{top:10px}
+.multi-record-module .record-summary-card:not(.pending-add):not(.pending-edit):not(.pending-delete){padding-top:8px;padding-bottom:8px;min-height:84px}
+.multi-record-module .record-summary-card.pending-edit{padding:16px 104px 16px 22px;min-height:96px}
+.multi-record-module .record-summary-card.pending-edit .record-status{top:12px;right:12px}
+.show-more{display:block;width:100%;min-height:40px;border-top:1px solid #eee4d8;color:#8a6842;font-size:12px}
+.set-emergency{position:relative;z-index:2;display:block;min-height:36px;margin:8px 0 -4px;padding:0 10px;border-radius:8px;background:#fbf7f0;color:#7a5d3c;font-size:12px}
+.set-emergency:disabled{color:#bbbfc4;cursor:not-allowed}
+.material-grid{display:grid;gap:12px;margin-bottom:12px}
+.material-slot{padding:12px;border:1px solid #eadfd3;border-radius:10px;background:#fffdf9}
+.material-slot h3{margin:0 0 4px}
+.material-slot .upload-trigger{margin-top:4px}
+.profile-org{white-space:nowrap;font-size:12px}
+.emergency-inline{display:flex;align-items:center;gap:8px}
+.emergency-inline span{color:#646a73;font-size:12px}
+.inline-module-head>div{display:flex;align-items:center;gap:6px}
+.inline-edit-icon{width:44px;min-height:44px;margin-right:-10px;color:#7a5d3c;font-size:20px;line-height:1}
+.family-summary{justify-content:center}
