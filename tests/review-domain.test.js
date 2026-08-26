@@ -12,8 +12,9 @@ function pendingState() {
 
 test('normalizes module and record requests into one review list', () => {
   const requests = listReviewRequests(pendingState());
-  assert.equal(requests.length, 3);
-  assert.deepEqual(requests.map(x => x.operation).sort(), ['delete', 'modify', 'modify']);
+  assert.equal(requests.length, 2);
+  assert.deepEqual(requests.map(x => x.operation).sort(), ['modify', 'modify']);
+  assert.doesNotMatch(JSON.stringify(requests), /work/);
   assert.ok(requests.every(x => x.employee.alias === '小满'));
 });
 
