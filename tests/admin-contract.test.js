@@ -13,7 +13,7 @@ test('admin entrypoint loads desktop review assets', async () => {
 
 test('review workbench includes stats filters table drawer and whole-request actions', async () => {
   const app = await load('src/admin.js');
-  for (const copy of ['待审核', '已通过', '已退回', '姓名 / 花名', '信息模块', '操作类型', '单据号', '审核详情', '退回', '通过', '下一条待审核']) {
+  for (const copy of ['待审核', '已通过', '已退回', '姓名 / 花名', '信息模块', '操作类型', '单据号', '退回', '通过', '下一条待审核']) {
     assert.match(app, new RegExp(copy));
   }
 });
@@ -34,11 +34,30 @@ test('review list and drawer use required Chinese labels and actions', async () 
   assert.match(app, /fieldNames\[key\]/);
 });
 
+test('bank review fields use Chinese labels', async () => {
+  const app = await load('src/admin.js');
+  for (const pair of ['city: \'开户城市\'', 'branch: \'开户支行\'', 'attachment: \'银行卡\'']) {
+    assert.match(app, new RegExp(pair));
+  }
+});
+
 test('drawer includes avatar and image preview', async () => {
   const app = await load('src/admin.js');
   assert.match(app, /class="review-avatar"/);
   assert.match(app, /class="image-preview"/);
   assert.match(app, /<img/);
+});
+
+test('attachments do not render previous values', async () => {
+  const app = await load('src/admin.js');
+  const materialsFn = app.match(/function materials\(files = \[\]\) \{[\s\S]*?\n\}/)?.[0] || '';
+  assert.doesNotMatch(materialsFn, /修改前/);
+  assert.doesNotMatch(materialsFn, /oldValue|original/);
+});
+
+test('drawer summary displays approval status', async () => {
+  const app = await load('src/admin.js');
+  assert.match(app, /审批状态：\$\{labelStatus\(r\.status\)\}/);
 });
 
 test('list renders simplified PI document numbers', async () => {
@@ -94,6 +113,24 @@ test('education review uses selectable record list and avoids duplicate material
   assert.match(app, /data-education-record/);
   assert.match(app, /selectedEducationRecordId/);
   assert.doesNotMatch(app, /<h3>\u8bc1\u660e\u6750\u6599<\/h3>\$\{materials\(r\)\}/);
+});
+
+test('education review hides unchanged labels and moves certificates to attachments', async () => {
+  const app = await load('src/admin.js');
+  assert.match(app, /educationOperationLabel/);
+  assert.doesNotMatch(app, /operationLabel\[item\.reviewOperation\] \|\| '已有记录'/);
+  assert.match(app, /educationDataRows/);
+  assert.match(app, /educationAttachments/);
+  assert.match(app, /degreeCertificate/);
+  assert.match(app, /diplomaCertificate/);
+  assert.match(app, /otherAttachments/);
+});
+
+test('drawer title uses alias module and application date', async () => {
+  const app = await load('src/admin.js');
+  assert.match(app, /function applicationTitle/);
+  assert.match(app, /<h2>\$\{applicationTitle\(r\)\}<\/h2>/);
+  assert.doesNotMatch(app, /<h2>审核详情<\/h2>/);
 });
 
 test('admin seeded review page includes required sample request categories', async () => {

@@ -3,6 +3,7 @@ import { resolveSection, resolveRecord } from './domain.js';
 const employee = { alias: '小满', name: '张晓雨', department: '人力资源中心', role: '员工关系专员', level: 'P5' };
 const labels = { basic: '身份证信息', education: '教育信息', family: '家庭信息', work: '工作履历', certificate: '证书信息', bank: '银行卡信息', emergency: '紧急联系人' };
 const operationName = { add: '新增', edit: '修改', delete: '删除', modify: '修改' };
+const identityFields = ['name', 'gender', 'idType', 'idNo', 'birthDate', 'ethnicity', 'nativePlace'];
 
 export function formatDocumentNo(id) {
   let hash = 0;
@@ -11,6 +12,8 @@ export function formatDocumentNo(id) {
 }
 
 function oldRecord(section, request) { return section.approvedData.find(item => item.id === request.recordId) || null; }
+function pick(data, fields) { return Object.fromEntries(fields.filter(field => data && field in data).map(field => [field, data[field]])); }
+function reviewData(sectionKey, data) { return sectionKey === 'basic' ? pick(data, identityFields) : data; }
 
 function relatedRecords(sectionKey, section, request) {
   if (sectionKey !== 'education') return [];
@@ -34,7 +37,7 @@ export function listReviewRequests(state) {
   const pending = [];
   for (const request of state.manualReviewRequests || []) pending.push({ ...request, employee: request.employee || employee });
   for (const [sectionKey, section] of Object.entries(state.sections)) {
-    if (section.status === 'pending') pending.push({ id: `section:${sectionKey}`, kind: 'section', sectionKey, module: labels[sectionKey], operation: 'modify', operationName: '修改', submittedAt: section.submittedAt, status: 'pending', employee, originalData: section.approvedData, requestedData: section.pendingData, attachments: section.pendingAttachments || [] });
+    if (section.status === 'pending') pending.push({ id: `section:${sectionKey}`, kind: 'section', sectionKey, module: labels[sectionKey], operation: 'modify', operationName: '修改', submittedAt: section.submittedAt, status: 'pending', employee, originalData: reviewData(sectionKey, section.approvedData), requestedData: reviewData(sectionKey, section.pendingData), attachments: section.pendingAttachments || [] });
     for (const request of section.recordRequests || []) pending.push({ id: `record:${sectionKey}:${request.requestId}`, kind: 'record', sectionKey, requestId: request.requestId, module: labels[sectionKey], operation: request.operation === 'edit' ? 'modify' : request.operation, operationName: operationName[request.operation], submittedAt: request.submittedAt, status: 'pending', employee, originalData: request.operation === 'add' ? null : oldRecord(section, request), requestedData: request.operation === 'delete' ? null : request.draft, relatedRecords: relatedRecords(sectionKey, section, request), attachments: request.attachments || [] });
   }
   const history = (state.reviewHistory || []).map(item => ({ ...item, employee, module: labels[item.sectionKey], operationName: operationName[item.operation] || '修改' }));

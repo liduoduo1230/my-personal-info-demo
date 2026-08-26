@@ -67,6 +67,18 @@ test('education review request includes all education records', () => {
   assert.ok(request.relatedRecords.some(item => item.id === 'e2' && item.reviewOperation === 'none'));
 });
 
+test('identity review requests include only identity document fields', () => {
+  const base = createInitialState();
+  const original = base.sections.basic.approvedData;
+  const state = submitSection(base, 'basic', { ...original, idNo: '310101199708129999', nativePlace: '\u6d59\u6c5f\u676d\u5dde' }, [{ slot: 'id-front' }, { slot: 'id-back' }]);
+  const request = listReviewRequests(state).find(item => item.sectionKey === 'basic');
+  assert.deepEqual(Object.keys(request.originalData).sort(), ['birthDate', 'ethnicity', 'gender', 'idNo', 'idType', 'name', 'nativePlace'].sort());
+  for (const key of ['alias', 'phone', 'email', 'socialSecurityLocation', 'address', 'maritalStatus', 'politicalStatus', 'householdType', 'householdAddress']) {
+    assert.ok(!(key in request.originalData));
+    assert.ok(!(key in request.requestedData));
+  }
+});
+
 test('PRD direct-save and read-only sections stay out of review list', () => {
   let state = createInitialState();
   state = state.sections.emergency ? state : createInitialState();

@@ -11,9 +11,10 @@ const fieldNames = {
   school: '学校名称', degree: '学历', major: '专业', graduation: '毕业时间', startDate: '开始时间', endDate: '结束时间',
   highestDegree: '是否最高学历', degreeCertificate: '学位证书', diplomaCertificate: '学历证书', otherAttachments: '其他附件',
   relation: '关系', company: '公司名称', role: '职位', period: '任职时间', certificateName: '证书名称', certificateType: '证书类型',
-  acquiredAt: '获得时间', expiresAt: '到期时间', bank: '开户银行', cardNo: '银行卡号'
+  acquiredAt: '获得时间', expiresAt: '到期时间', bank: '开户银行', city: '开户城市', branch: '开户支行', cardNo: '银行卡号', attachment: '银行卡'
 };
 const operationLabel = { none: '已有记录', add: '本次新增', edit: '本次修改', delete: '本次删除' };
+const educationAttachmentFields = ['degreeCertificate', 'diplomaCertificate', 'otherAttachments'];
 
 let state = load();
 let selectedId = null;
@@ -51,6 +52,8 @@ function load() { try { const saved = JSON.parse(localStorage.getItem(KEY)); ret
 function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
 function esc(v = '') { return String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); }
 function fmt(v) { return v ? new Date(v).toLocaleString('zh-CN', { hour12: false }) : '-'; }
+function dateOnly(v) { return v ? new Date(v).toLocaleDateString('zh-CN') : '-'; }
+function applicationTitle(r) { return `${r.employee.alias}-${r.module}-${dateOnly(r.submittedAt)}`; }
 function all() { return listReviewRequests(state); }
 function filtered() { return all().filter(r => (filters.status === 'all' || r.status === filters.status) && (filters.module === 'all' || r.sectionKey === filters.module) && (filters.operation === 'all' || r.operation === filters.operation) && (!filters.query || `${r.employee.name}${r.employee.alias}`.includes(filters.query))); }
 function labelStatus(s) { return s === 'pending' ? '待审核' : s === 'approved' ? '已通过' : '已退回'; }
@@ -79,13 +82,28 @@ function materials(files = []) {
     : `<div class="file">${esc(file.name)}</div>`).join('');
 }
 
+function educationOperationLabel(operation) { return operation === 'none' ? '' : (operationLabel[operation] || ''); }
+function educationDataRows(original, requested, operation) {
+  const strip = data => data ? Object.fromEntries(Object.entries(data).filter(([key]) => !educationAttachmentFields.includes(key))) : data;
+  return valueRows(strip(original), strip(requested), operation);
+}
+function educationAttachments(item) {
+  const requested = item.requestedData || item;
+  const certificateFiles = educationAttachmentFields.flatMap(key => {
+    const value = requested?.[key];
+    if (!value) return [];
+    return Array.isArray(value) ? value.filter(Boolean).map(name => ({ name })) : [{ name: value }];
+  });
+  return [...(item.attachments || []), ...certificateFiles];
+}
+
 function educationRecordList(r) {
   if (r.sectionKey !== 'education' || !r.relatedRecords?.length) return '';
   if (!selectedEducationRecordId || !r.relatedRecords.some(item => item.id === selectedEducationRecordId)) {
     const target = r.relatedRecords.find(item => item.reviewOperation !== 'none') || r.relatedRecords[0];
     selectedEducationRecordId = target?.id || null;
   }
-  const rows = r.relatedRecords.map(item => `<button type="button" class="education-record-item ${item.id === selectedEducationRecordId ? 'active' : ''}" data-education-record="${esc(item.id)}"><span class="operation-mark ${item.reviewOperation}">${operationLabel[item.reviewOperation] || '已有记录'}</span><strong>${esc(item.school || '-')}</strong><small>${esc(item.startDate || '-')} - ${esc(item.endDate || item.graduation || '-')} · ${esc(item.degree || '-')} · ${esc(item.major || '-')}</small></button>`).join('');
+  const rows = r.relatedRecords.map(item => { const label = educationOperationLabel(item.reviewOperation); return `<button type="button" class="education-record-item ${item.id === selectedEducationRecordId ? 'active' : ''}" data-education-record="${esc(item.id)}">${label ? `<span class="operation-mark ${item.reviewOperation}">${label}</span>` : ''}<strong>${esc(item.school || '-')}</strong><small>${esc(item.startDate || '-')} - ${esc(item.endDate || item.graduation || '-')} · ${esc(item.degree || '-')} · ${esc(item.major || '-')}</small></button>`; }).join('');
   return `<section class="block review-detail-card education-record-list"><h3>全部教育记录</h3><div class="education-record-grid">${rows}</div></section>`;
 }
 
@@ -94,7 +112,8 @@ function educationRecordDetail(r) {
   const item = r.relatedRecords.find(record => record.id === selectedEducationRecordId) || r.relatedRecords[0];
   const original = item.reviewOperation === 'add' ? null : (item.originalData || item);
   const requested = item.reviewOperation === 'delete' ? null : (item.requestedData || item);
-  return `<section class="block review-detail-card"><div class="application-section-title"><h3>提交信息</h3><span class="operation-mark ${item.reviewOperation}">${operationLabel[item.reviewOperation] || '已有记录'}</span></div><div class="data-box">${valueRows(original, requested, item.reviewOperation === 'edit' ? 'modify' : item.reviewOperation)}</div><h3>附件</h3>${materials(item.attachments || [])}</section>`;
+  const label = educationOperationLabel(item.reviewOperation);
+  return `<section class="block review-detail-card"><div class="application-section-title"><h3>提交信息</h3>${label ? `<span class="operation-mark ${item.reviewOperation}">${label}</span>` : ''}</div><div class="data-box">${educationDataRows(original, requested, item.reviewOperation === 'edit' ? 'modify' : item.reviewOperation)}</div><h3>附件</h3>${materials(educationAttachments(item))}</section>`;
 }
 
 function normalDetail(r) {
@@ -109,7 +128,7 @@ function drawerContent(r) {
 function drawer() {
   const r = all().find(x => x.id === selectedId);
   if (!r) return '';
-  return `<div class="mask" data-action="close"></div><aside class="drawer"><div class="drawer-head"><h2>审核详情</h2><button class="close" data-action="close">×</button></div><div class="drawer-body"><div class="employee employee-summary-card"><div class="review-avatar">满</div><div><strong>${r.employee.alias}（${r.employee.name}）</strong><div class="meta"><span>部门：${r.employee.department}</span><span>岗位：${r.employee.role}</span><span>提交时间：${fmt(r.submittedAt)}</span></div></div></div>${drawerContent(r)}${r.status !== 'pending' ? `<section class="block audit-result"><h3>审核结果</h3><p>审核人：${r.reviewer} 审核时间：${fmt(r.reviewedAt)}</p>${r.reason ? `<p>退回原因：${r.reason}</p>` : ''}</section>` : ''}${rejecting ? '<div class="reject-box"><strong>退回原因</strong><textarea id="reason" placeholder="请输入明确的退回原因"></textarea><div class="reject-actions"><button class="btn" data-action="cancel-reject">取消</button><button class="btn danger" data-action="confirm-reject">确认退回</button></div></div>' : ''}</div>${r.status === 'pending' ? `<footer class="drawer-foot">${rejecting ? '' : '<button class="btn danger" data-action="reject">退回</button><button class="btn primary" data-action="approve">通过</button>'}</footer>` : ''}</aside>`;
+  return `<div class="mask" data-action="close"></div><aside class="drawer"><div class="drawer-head"><h2>${applicationTitle(r)}</h2><button class="close" data-action="close">×</button></div><div class="drawer-body"><div class="employee employee-summary-card"><div class="review-avatar">满</div><div><strong>${r.employee.alias}（${r.employee.name}）</strong><div class="meta"><span>部门：${r.employee.department}</span><span>岗位：${r.employee.role}</span><span>提交时间：${fmt(r.submittedAt)}</span><span>审批状态：${labelStatus(r.status)}</span></div></div></div>${drawerContent(r)}${r.status !== 'pending' ? `<section class="block audit-result"><h3>审核结果</h3><p>审核人：${r.reviewer} 审核时间：${fmt(r.reviewedAt)}</p>${r.reason ? `<p>退回原因：${r.reason}</p>` : ''}</section>` : ''}${rejecting ? '<div class="reject-box"><strong>退回原因</strong><textarea id="reason" placeholder="请输入明确的退回原因"></textarea><div class="reject-actions"><button class="btn" data-action="cancel-reject">取消</button><button class="btn danger" data-action="confirm-reject">确认退回</button></div></div>' : ''}</div>${r.status === 'pending' ? `<footer class="drawer-foot">${rejecting ? '' : '<button class="btn danger" data-action="reject">退回</button><button class="btn primary" data-action="approve">通过</button>'}</footer>` : ''}</aside>`;
 }
 
 function toast(msg) { document.body.insertAdjacentHTML('beforeend', `<div class="toast">${msg}</div>`); setTimeout(() => document.querySelector('.toast')?.remove(), 1800); }
