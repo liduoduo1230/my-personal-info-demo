@@ -71,3 +71,10 @@ test('admin uses landscape workbench and employee summary cards', async () => {
     assert.match(css, new RegExp(`\\.${className}`));
   }
 });
+
+test('education drawer renders full education context', async () => {
+  const app = await load('src/admin.js');
+  assert.match(app, /educationContext/);
+  assert.match(app, /relatedRecords/);
+  assert.match(app, /reviewOperation/);
+});

@@ -60,6 +60,13 @@ test('certificate record requests appear in the review list', () => {
   assert.equal(request.operation, 'add');
 });
 
+test('education review request includes all education records', () => {
+  const request = listReviewRequests(pendingState()).find(item => item.sectionKey === 'education');
+  assert.equal(request.relatedRecords.length, 2);
+  assert.ok(request.relatedRecords.some(item => item.id === 'e1' && item.reviewOperation === 'edit'));
+  assert.ok(request.relatedRecords.some(item => item.id === 'e2' && item.reviewOperation === 'none'));
+});
+
 test('PRD direct-save and read-only sections stay out of review list', () => {
   let state = createInitialState();
   state = state.sections.emergency ? state : createInitialState();
