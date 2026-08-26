@@ -72,9 +72,34 @@ test('admin uses landscape workbench and employee summary cards', async () => {
   }
 });
 
-test('education drawer renders full education context', async () => {
+test('education drawer renders full education review context', async () => {
   const app = await load('src/admin.js');
-  assert.match(app, /educationContext/);
+  assert.match(app, /educationRecordList/);
+  assert.match(app, /educationRecordDetail/);
   assert.match(app, /relatedRecords/);
   assert.match(app, /reviewOperation/);
+});
+
+test('education field labels cover certificates and highest degree', async () => {
+  const app = await load('src/admin.js');
+  for (const key of ['highestDegree', 'degreeCertificate', 'diplomaCertificate', 'otherAttachments']) {
+    assert.match(app, new RegExp(`${key}:`));
+  }
+});
+
+test('education review uses selectable record list and avoids duplicate materials block', async () => {
+  const app = await load('src/admin.js');
+  assert.match(app, /educationRecordList/);
+  assert.match(app, /educationRecordDetail/);
+  assert.match(app, /data-education-record/);
+  assert.match(app, /selectedEducationRecordId/);
+  assert.doesNotMatch(app, /<h3>\u8bc1\u660e\u6750\u6599<\/h3>\$\{materials\(r\)\}/);
+});
+
+test('admin seeded review page includes required sample request categories', async () => {
+  const app = await load('src/admin.js');
+  for (const copy of ['\u8eab\u4efd\u8bc1\u4fe1\u606f', '\u6237\u53e3\u4fe1\u606f', '\u94f6\u884c\u5361\u4fe1\u606f', '\u6559\u80b2\u4fe1\u606f']) {
+    assert.match(app, new RegExp(copy));
+  }
+  assert.match(app, /manualReviewRequests/);
 });
