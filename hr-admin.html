@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR 假勤管理 Demo</title>
+    <style>
+      :root {
+        --brand-dark: #3b3431;
+        --brand-paper: #f7f6f3;
+        --brand-paper-strong: #ede7e2;
+        --brand-gold: #b78f62;
+        --brand-gold-soft: #f5e8c8;
+        --text-primary: #1f2329;
+        --text-secondary: #646a73;
+        --text-tertiary: #8f959e;
+        --line: #d0d3d6;
+        --line-soft: #dee0e3;
+        --surface: #ffffff;
+        --info: #336df4;
+        --info-soft: #f0f4ff;
+        --success: #258832;
+        --success-soft: #e4fae1;
+        --warning: #ed6d0c;
+        --warning-soft: #fff4e8;
+        --danger: #cc4b3d;
+        --danger-soft: #fae8e6;
+        --shadow: 0 10px 28px rgba(59, 52, 49, 0.08);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: var(--text-primary);
+        background: var(--brand-paper);
+        font: 14px/1.55 "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      }
+      button, input, select, textarea { font: inherit; }
+      button { cursor: pointer; }
+      h1, h2, h3, p { margin: 0; }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 64px;
+        padding: 0 28px;
+        color: #fff;
+        background: var(--brand-dark);
+      }
+      .topbar h1 { font-size: 18px; line-height: 26px; }
+      .topbar p { color: rgba(255,255,255,.68); font-size: 12px; }
+      .top-actions { display: flex; gap: 8px; }
+      .btn {
+        min-height: 32px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 0 12px;
+        color: var(--brand-dark);
+        background: #fff;
+      }
+      .btn.primary { border-color: var(--brand-gold); color: #fff; background: var(--brand-gold); }
+      .btn.ghost { color: #fff; border-color: rgba(255,255,255,.24); background: rgba(255,255,255,.08); }
+      .btn.danger { border-color: var(--danger); color: var(--danger); background: #fff; }
+
+      .layout { max-width: 1440px; margin: 0 auto; padding: 20px 24px 32px; }
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .tab {
+        min-height: 36px;
+        border: 1px solid var(--line-soft);
+        border-radius: 6px;
+        padding: 0 16px;
+        color: var(--text-secondary);
+        background: #fff;
+      }
+      .tab.active { color: var(--brand-dark); border-color: var(--brand-gold); background: var(--brand-gold-soft); font-weight: 700; }
+      .page { display: none; }
+      .page.active { display: block; }
+
+      .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 16px; }
+      .metric, .panel {
+        border: 1px solid var(--line-soft);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+      .metric { padding: 14px 16px; }
+      .metric span { color: var(--text-tertiary); font-size: 12px; }
+      .metric strong { display: block; margin-top: 4px; color: var(--brand-dark); font-size: 22px; line-height: 30px; }
+      .panel { padding: 16px; }
+      .panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+      .panel-head h2 { color: var(--brand-dark); font-size: 16px; line-height: 24px; }
+      .panel-head p { color: var(--text-secondary); font-size: 12px; }
+
+      .rule-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+      .audit-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+      .sub-tabs { display: inline-flex; gap: 4px; margin-bottom: 12px; border: 1px solid var(--line-soft); border-radius: 8px; padding: 4px; background: #fff; }
+      .sub-tab { min-height: 32px; border: 0; border-radius: 6px; padding: 0 16px; color: var(--text-secondary); background: transparent; }
+      .sub-tab.active { color: var(--brand-dark); border-color: var(--brand-gold); background: var(--brand-gold-soft); font-weight: 700; }
+      .audit-tab-row { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; margin-left: 12px; border: 1px solid var(--line-soft); border-radius: 8px; padding: 4px; background: #fff; }
+      .status-tab { min-height: 32px; border: 0; border-radius: 6px; padding: 0 14px; color: var(--text-secondary); background: transparent; }
+      .status-tab.active { color: var(--brand-dark); border-color: var(--brand-gold); background: var(--brand-gold-soft); font-weight: 700; }
+      .table-wrap { overflow-x: auto; }
+      .table-wrap table { min-width: 1360px; }
+      .filters { display: grid; grid-template-columns: 160px 160px 1fr 96px; gap: 8px; margin-bottom: 12px; }
+      .field span { display: block; margin-bottom: 5px; color: var(--text-tertiary); font-size: 12px; }
+      .field input, .field select, .field textarea {
+        width: 100%; min-height: 34px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; background: #fff;
+      }
+      textarea { resize: vertical; }
+
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border-bottom: 1px solid var(--line-soft); padding: 10px 8px; text-align: left; vertical-align: top; }
+      th { color: var(--text-secondary); background: #f5f6f7; font-size: 12px; font-weight: 700; }
+      tr.clickable:hover { background: #fffaf0; }
+      .num { text-align: right; white-space: nowrap; }
+      .muted { color: var(--text-tertiary); font-size: 12px; }
+      .tag { display: inline-flex; align-items: center; min-height: 22px; border-radius: 999px; padding: 0 8px; color: var(--text-secondary); background: var(--brand-paper-strong); font-size: 12px; white-space: nowrap; }
+      .tag.green { color: var(--success); background: var(--success-soft); }
+      .tag.orange { color: #9b4c00; background: var(--warning-soft); }
+      .tag.red { color: var(--danger); background: var(--danger-soft); }
+      .tag.blue { color: var(--info); background: var(--info-soft); }
+
+      .detail-stack { display: grid; gap: 12px; }
+      .detail-block { border: 1px solid var(--line-soft); border-radius: 8px; padding: 12px; background: #fffdf9; }
+      .detail-block h3 { margin-bottom: 8px; font-size: 14px; color: var(--brand-dark); }
+      .kv { display: grid; grid-template-columns: 96px 1fr; gap: 8px; margin-bottom: 6px; }
+      .kv dt { color: var(--text-tertiary); }
+      .kv dd { margin: 0; }
+      .check-list, .timeline { margin: 0; padding-left: 18px; }
+      .check-list li, .timeline li { margin-bottom: 6px; }
+      .attachment-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .attachment-card { border: 1px solid var(--line-soft); border-radius: 8px; overflow: hidden; background: #fff; }
+      .attachment-preview { display: flex; align-items: center; justify-content: center; height: 96px; color: var(--brand-dark); background: var(--brand-paper-strong); font-weight: 700; }
+      .attachment-meta { padding: 8px 10px; }
+      .attachment-meta strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .attachment-meta span { color: var(--text-tertiary); font-size: 12px; }
+      .action-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+      .row-actions { display: flex; gap: 6px; justify-content: flex-end; white-space: nowrap; }
+      .audit-actions.hidden { display: none; }
+      .hidden { display: none !important; }
+      .rule-form { display: grid; gap: 10px; }
+      .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .drawer-mask { position: fixed; inset: 0; z-index: 40; display: none; background: rgba(31, 35, 41, .38); }
+      .drawer-mask.open { display: block; }
+      .drawer { position: fixed; top: 0; right: 0; z-index: 41; width: min(560px, 100vw); height: 100vh; padding: 18px; overflow: auto; background: var(--surface); box-shadow: -12px 0 30px rgba(59, 52, 49, .16); transform: translateX(100%); transition: transform .18s ease; }
+      .drawer.open { transform: translateX(0); }
+      .drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+      .drawer-head h2 { color: var(--brand-dark); font-size: 18px; line-height: 26px; }
+      .drawer-head p { color: var(--text-secondary); font-size: 12px; }
+      .drawer-close { width: 34px; min-height: 34px; padding: 0; border-radius: 50%; }
+
+      @media (max-width: 1100px) {
+        .summary-grid, .rule-grid, .audit-grid { grid-template-columns: 1fr; }
+        .filters { grid-template-columns: 1fr 1fr; }
+      }
+      @media (max-width: 640px) {
+        .topbar { align-items: flex-start; flex-direction: column; padding: 14px 16px; }
+        .layout { padding: 12px; }
+        .summary-grid, .filters, .two-col { grid-template-columns: 1fr; }
+        th:nth-child(4), td:nth-child(4), th:nth-child(6), td:nth-child(6) { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>假勤管理后台</h1>
+        <p>假期规则配置 / HR 审核单据 Demo</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn ghost" type="button">导出配置</button>
+        <button class="btn primary" type="button">发布规则</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <nav class="tabs" aria-label="页面切换">
+        <button class="tab active" type="button" data-page="rulesPage">假期规则配置</button>
+        <button class="tab" type="button" data-page="auditPage">HR 审核单据</button>
+      </nav>
+
+      <section id="rulesPage" class="page active">
+        <div class="summary-grid">
+          <div class="metric"><span>假期类型</span><strong>15</strong></div>
+          <div class="metric"><span>需预生成额度</span><strong>7</strong></div>
+          <div class="metric"><span>需附件证明</span><strong>9</strong></div>
+          <div class="metric"><span>待发布变更</span><strong>3</strong></div>
+        </div>
+
+        <div class="rule-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>假期规则列表</h2>
+                <p>配置请假时长计算、余额发放、有效期、延期和应用范围。</p>
+              </div>
+              <button class="btn primary" type="button">新增假期类型</button>
+            </div>
+            <div class="filters">
+              <label class="field"><span>适用对象</span><select><option>全部伙伴</option><option>总部伙伴</option><option>门店伙伴</option></select></label>
+              <label class="field"><span>额度方式</span><select><option>全部</option><option>预生成额度</option><option>无需额度</option></select></label>
+              <label class="field"><span>关键字</span><input value="育儿假" /></label>
+              <button class="btn" type="button">查询</button>
+            </div>
+            <table>
+              <thead>
+                <tr><th>假期类型</th><th>时长计算</th><th>余额发放</th><th>有效期</th><th>应用范围</th><th>延期</th><th>状态</th><th class="num">操作</th></tr>
+              </thead>
+              <tbody id="ruleTable"></tbody>
+            </table>
+          </section>
+
+        </div>
+      </section>
+
+      <section id="auditPage" class="page">
+        <div class="sub-tabs" aria-label="审核单据类型">
+          <button class="sub-tab active" type="button" data-audit-type="overtime">加班</button>
+          <button class="sub-tab" type="button" data-audit-type="comp">调休</button>
+          <button class="sub-tab" type="button" data-audit-type="leave">请假</button>
+        </div>
+        <div class="audit-tab-row" aria-label="审批状态">
+          <button class="status-tab active" type="button" data-audit-status="全部">全部</button>
+          <button class="status-tab" type="button" data-audit-status="审批中">待审批</button>
+          <button class="status-tab" type="button" data-audit-status="审批通过">审批通过</button>
+          <button class="status-tab" type="button" data-audit-status="审批拒绝">审批拒绝</button>
+        </div>
+        <div class="audit-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>审核单据</h2>
+              </div>
+              <button class="btn" type="button">批量导出</button>
+            </div>
+            <div class="filters">
+              <label class="field"><span>单据状态</span><select><option>全部</option><option>审批中</option><option>审批通过</option><option>审批拒绝</option></select></label>
+              <label class="field"><span>当前节点</span><select><option>全部</option><option>直属主管</option><option>HR 审核</option><option>流程归档</option></select></label>
+              <label class="field"><span>申请人</span><input value="呈语" /></label>
+              <button class="btn" type="button">查询</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead id="auditHead"></thead>
+                <tbody id="auditTable"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <div id="drawerMask" class="drawer-mask" aria-hidden="true"></div>
+    <aside id="ruleDrawer" class="drawer" aria-label="编辑假期规则">
+      <div class="drawer-head">
+        <div>
+          <h2>编辑假期规则</h2>
+          <p>点击列表中的规则后在此维护配置，保存后进入待发布变更。</p>
+        </div>
+        <button id="closeDrawer" class="btn drawer-close" type="button" aria-label="关闭">×</button>
+      </div>
+      <form class="rule-form">
+        <label class="field"><span>假期类型</span><input id="ruleName" value="育儿假一胎" /></label>
+        <div class="two-col">
+          <label class="field"><span>是否预生成额度</span><select id="quotaMode"><option>预生成额度</option><option>首次审批生成额度</option><option>无需额度</option></select></label>
+          <label class="field"><span>申请单位</span><select id="ruleUnit"><option>天</option><option>小时</option></select></label>
+        </div>
+        <div class="two-col">
+          <label class="field"><span>请假时长计算</span><select id="durationMode"><option>工作日</option><option>自然日</option></select></label>
+          <label class="field"><span>最小申请单位</span><input id="minUnit" value="0.5" /></label>
+        </div>
+        <div class="two-col">
+          <label class="field"><span>余额发放方式</span><select id="grantMode"><option>EHR 自动生成</option><option>按年一次性发放</option><option>按月折算发放</option><option>HR 手工维护</option><option>无需额度</option></select></label>
+          <label class="field"><span>有效期规则</span><input id="validityRule" value="当年 12 月 31 日失效" /></label>
+        </div>
+        <div class="two-col">
+          <label class="field"><span>应用范围</span><select id="scopeRule"><option>总部伙伴</option><option>门店伙伴</option><option>经营战区</option><option>全部伙伴</option></select></label>
+          <label class="field"><span>是否允许延期</span><select id="allowExtension"><option>不允许</option><option>允许</option></select></label>
+        </div>
+        <div class="two-col">
+          <label class="field"><span>延期时长</span><input id="extensionDuration" value="0 天" /></label>
+          <label class="field"><span>额度来源</span><select id="quotaSource"><option>EHR 自动生成</option><option>HR 手工维护</option><option>首次婚假审批单</option><option>无需额度</option></select></label>
+        </div>
+        <label class="field"><span>附件要求</span><textarea id="proofRule" rows="3">建议先维护子女信息，按审批要求补充证明。</textarea></label>
+        <label class="field"><span>申请说明</span><textarea id="memoRule" rows="4">当前假期暂无可用额度时，请先编辑档案并维护家庭信息，等待 EHR 生成额度后再申请。</textarea></label>
+        <div class="action-row">
+          <button class="btn" type="button">保存草稿</button>
+          <button class="btn primary" type="button">提交发布</button>
+        </div>
+      </form>
+    </aside>
+
+    <aside id="auditDrawer" class="drawer" aria-label="审核单据详情">
+      <div class="drawer-head">
+        <div>
+          <h2>审核单据详情</h2>
+        </div>
+        <button id="closeAuditDrawer" class="btn drawer-close" type="button" aria-label="关闭">×</button>
+      </div>
+      <div class="detail-stack">
+        <section class="detail-block">
+          <h3>申请人信息</h3>
+          <dl class="kv"><dt>申请人</dt><dd id="auditApplicant">呈语（李群）</dd></dl>
+          <dl class="kv"><dt>部门</dt><dd id="auditDepartment">数智科技中心 / 集团管理产品</dd></dl>
+          <dl class="kv"><dt>岗位</dt><dd id="auditPosition">高级产品经理</dd></dl>
+          <dl class="kv"><dt>标签</dt><dd><span class="tag blue">总部伙伴</span></dd></dl>
+        </section>
+        <section class="detail-block">
+          <h3>单据信息</h3>
+          <dl class="kv"><dt>单号</dt><dd id="auditCode">L202608250018</dd></dl>
+          <dl class="kv"><dt>单据名称</dt><dd id="auditName">请假申请单</dd></dl>
+          <dl class="kv"><dt>类型</dt><dd id="auditCategory">带薪病假</dd></dl>
+          <dl class="kv"><dt>时间</dt><dd><span id="auditStart">2026-08-25 10:00</span> 至 <span id="auditEnd">2026-08-26 18:00</span></dd></dl>
+          <dl class="kv"><dt>总时长</dt><dd id="auditTotal">2 天</dd></dl>
+          <dl class="kv"><dt>审批状态</dt><dd id="auditState"><span class="tag orange">待 HR 审核</span></dd></dl>
+          <dl class="kv"><dt>提交时间</dt><dd id="auditSubmitTime">2026-08-25 09:12</dd></dl>
+          <dl class="kv"><dt>提交人</dt><dd id="auditSubmitter">呈语（李群）</dd></dl>
+          <dl class="kv"><dt id="auditReasonLabel">申请事由</dt><dd id="auditReason">持续发热就医，已同步项目安排。</dd></dl>
+        </section>
+        <section class="detail-block">
+          <h3>附件</h3>
+          <div class="attachment-grid" id="auditAttachmentList"></div>
+        </section>
+        <section class="detail-block">
+          <h3>审批记录</h3>
+          <ol class="timeline" id="auditTimeline"></ol>
+        </section>
+        <div id="auditOpinionBlock">
+          <label class="field"><span>HR 审核意见</span><textarea rows="3" placeholder="请输入审核意见"></textarea></label>
+        </div>
+        <div id="auditActionRow" class="action-row audit-actions">
+          <button class="btn primary" type="button">审批通过</button>
+          <button class="btn danger" type="button">审批拒绝</button>
+        </div>
+      </div>
+    </aside>
+
+    <script>
+      const rules = [
+        { name: "年假", quotaMode: "预生成额度", unit: "天", durationMode: "工作日", minUnit: "0.5", grantMode: "按年一次性发放", validityRule: "当年 12 月 31 日失效", scopeRule: "总部伙伴", allowExtension: "允许", extensionDuration: "90 天", quotaSource: "EHR 自动生成", proof: "", memo: "可按 0.5 天为单位申请。", status: "已发布" },
+        { name: "额外福利年假", quotaMode: "预生成额度", unit: "天", durationMode: "工作日", minUnit: "0.5", grantMode: "按年一次性发放", validityRule: "次年 3 月 31 日失效", scopeRule: "总部伙伴", allowExtension: "不允许", extensionDuration: "0 天", quotaSource: "HR 手工维护", proof: "", memo: "使用前需确认福利年假额度已生效。", status: "已发布" },
+        { name: "带薪病假", quotaMode: "预生成额度", unit: "天", durationMode: "工作日", minUnit: "0.5", grantMode: "按年一次性发放", validityRule: "当年有效，不结转", scopeRule: "总部伙伴", allowExtension: "不允许", extensionDuration: "0 天", quotaSource: "EHR 自动生成", proof: "多天需病假单或多天就医记录", memo: "多天申请请同步上传医疗证明。", status: "已发布" },
+        { name: "育儿假一胎", quotaMode: "预生成额度", unit: "天", durationMode: "自然日", minUnit: "1", grantMode: "EHR 自动生成", validityRule: "按子女生日所在年度生成", scopeRule: "全部伙伴", allowExtension: "不允许", extensionDuration: "0 天", quotaSource: "EHR 自动生成", proof: "维护家庭信息后按要求补充证明", memo: "当前假期暂无可用额度时，请先编辑档案并维护家庭信息，等待 EHR 生成额度后再申请。", status: "草稿" },
+        { name: "婚假", quotaMode: "首次审批生成额度", unit: "天", durationMode: "自然日", minUnit: "1", grantMode: "审批通过后一次性生成 10 天", validityRule: "按结婚登记日校验", scopeRule: "全部伙伴", allowExtension: "不允许", extensionDuration: "0 天", quotaSource: "首次婚假审批单", proof: "结婚登记证照片", memo: "首次申请需提交相关材料，请假时长小于等于 10 天；审批通过后生成 10 天婚假额度，并扣除本次请假时长。再次申请只能使用剩余额度。", status: "已发布" },
+        { name: "产假", quotaMode: "无需额度", unit: "天", durationMode: "自然日", minUnit: "1", grantMode: "无需额度", validityRule: "按预产期证明校验", scopeRule: "全部伙伴", allowExtension: "允许", extensionDuration: "按政策审批", quotaSource: "无需额度", proof: "预产期证明及结婚证", memo: "请按产假审批要求填写预计休假周期。", status: "已发布" },
+        { name: "陪产假", quotaMode: "无需额度", unit: "天", durationMode: "自然日", minUnit: "1", grantMode: "无需额度", validityRule: "按宝宝出生日期校验", scopeRule: "全部伙伴", allowExtension: "不允许", extensionDuration: "0 天", quotaSource: "无需额度", proof: "宝宝出生证明及结婚证", memo: "请按实际陪产时间填写，可在备注中说明是否分次休。", status: "待发布" },
+        { name: "丧假", quotaMode: "无需额度", unit: "天", durationMode: "自然日", minUnit: "1", grantMode: "无需额度", validityRule: "按事件发生时间校验", scopeRule: "全部伙伴", allowExtension: "不允许", extensionDuration: "0 天", quotaSource: "无需额度", proof: "相关证明，需说明亲属关系", memo: "请在事由中说明亲属关系。", status: "已发布" }
+      ];
+      const auditColumns = {
+        leave: ["单号", "单据名称", "申请人", "假期类型", "开始时间", "结束时间", "总时长", "当前节点", "审批状态", "提交时间", "提交人", "操作"],
+        overtime: ["单号", "单据名称", "申请人", "类型", "开始时间", "结束时间", "总时长", "当前节点", "审批状态", "提交时间", "提交人", "操作"],
+        comp: ["单号", "单据名称", "申请人", "类型", "开始时间", "结束时间", "总时长", "当前节点", "审批状态", "提交时间", "提交人", "操作"]
+      };
+      const audits = {
+        overtime: [
+          { code: "O202608250011", name: "节假日加班申请-南乔-2026-08-24", applicant: "南乔（王磊）", category: "节假日加班", start: "2026-08-24 10:00", end: "2026-08-24 18:00", total: "8 小时", node: "HR 审核", status: "审批中", submitTime: "2026-08-25 09:18", submitter: "南乔（王磊）", reason: "门店结算支持，已提前邮件审批。", attachments: ["考勤记录-20260824.png", "加班邮件审批.eml"], approvals: [{ approver: "直属主管 林川", result: "审批通过", opinion: "节假日结算支持属实，同意。", time: "2026-08-25 10:04" }] },
+          { code: "O202608250019", name: "加班申请-云起-2026-08-22", applicant: "云起（张晨）", category: "加班", start: "2026-08-22 19:00", end: "2026-08-22 22:00", total: "3 小时", node: "直属主管", status: "审批中", submitTime: "2026-08-25 10:02", submitter: "云起（张晨）", reason: "版本上线值守。", attachments: ["上线值守邮件.eml"], approvals: [] },
+          { code: "O202608240016", name: "加班申请-青岚-2026-08-21", applicant: "青岚（周颖）", category: "加班", start: "2026-08-21 19:00", end: "2026-08-21 21:30", total: "2.5 小时", node: "流程归档", status: "审批通过", submitTime: "2026-08-24 16:48", submitter: "青岚（周颖）", reason: "月结数据核对，已提前邮件申请。", attachments: ["考勤记录-20260821.png", "部门负责人审批.eml"], approvals: [{ approver: "直属主管 南亭", result: "审批通过", opinion: "月结任务属实，同意。", time: "2026-08-24 17:15" }, { approver: "HR 伙伴 苏木", result: "审批通过", opinion: "附件完整，已归档。", time: "2026-08-24 18:06" }] },
+          { code: "O202608230004", name: "加班申请-知行-2026-08-20", applicant: "知行（吴昊）", category: "加班", start: "2026-08-20 20:00", end: "2026-08-20 23:00", total: "3 小时", node: "流程终止", status: "审批拒绝", submitTime: "2026-08-23 11:20", submitter: "知行（吴昊）", reason: "事后补提加班申请。", attachments: ["考勤记录-20260820.png"], approvals: [{ approver: "直属主管 明台", result: "审批拒绝", opinion: "未提前三工作日邮件申请，不符合制度要求。", time: "2026-08-23 14:18" }] },
+          { code: "O202608220008", name: "节假日加班申请-望舒-2026-08-18", applicant: "望舒（韩雪）", category: "节假日加班", start: "2026-08-18 10:00", end: "2026-08-18 14:00", total: "4 小时", node: "流程终止", status: "已撤回", submitTime: "2026-08-22 09:02", submitter: "望舒（韩雪）", reason: "排班调整后无需加班。", attachments: ["节假日值班邮件.eml"], approvals: [] }
+        ],
+        comp: [
+          { code: "C202608240021", name: "调休申请-明台-2026-08-27", applicant: "明台（赵宇）", category: "调休", start: "2026-08-27 10:00", end: "2026-08-27 18:00", total: "8 小时", node: "流程归档", status: "审批通过", submitTime: "2026-08-24 18:20", submitter: "明台（赵宇）", reason: "使用加班余额调休。", attachments: ["加班余额记录.pdf"], approvals: [{ approver: "直属主管 青岚", result: "审批通过", opinion: "余额充足，同意调休。", time: "2026-08-24 19:01" }, { approver: "HR 伙伴 苏木", result: "审批通过", opinion: "调休余额已扣减。", time: "2026-08-25 09:13" }] },
+          { code: "C202608250007", name: "调休申请-令仪-2026-08-28", applicant: "令仪（刘敏）", category: "调休", start: "2026-08-28 14:00", end: "2026-08-28 18:00", total: "4 小时", node: "HR 审核", status: "审批中", submitTime: "2026-08-25 11:42", submitter: "令仪（刘敏）", reason: "下午半天调休。", attachments: [], approvals: [{ approver: "直属主管 南亭", result: "审批通过", opinion: "工作已安排交接。", time: "2026-08-25 12:30" }] },
+          { code: "C202608250012", name: "调休申请-远山-2026-08-26", applicant: "远山（陈卓）", category: "调休", start: "2026-08-26 10:00", end: "2026-08-26 14:00", total: "4 小时", node: "流程终止", status: "审批拒绝", submitTime: "2026-08-25 09:50", submitter: "远山（陈卓）", reason: "使用未归档的加班时长申请调休。", attachments: ["加班申请截图.png"], approvals: [{ approver: "直属主管 一禾", result: "审批通过", opinion: "业务安排可调休。", time: "2026-08-25 10:32" }, { approver: "HR 伙伴 苏木", result: "审批拒绝", opinion: "对应加班单尚未归档，暂不支持扣减调休余额。", time: "2026-08-25 13:04" }] },
+          { code: "C202608230015", name: "调休申请-星河-2026-08-25", applicant: "星河（罗凯）", category: "调休", start: "2026-08-25 10:00", end: "2026-08-25 18:00", total: "8 小时", node: "流程终止", status: "已撤回", submitTime: "2026-08-23 17:36", submitter: "星河（罗凯）", reason: "会议调整，取消调休安排。", attachments: [], approvals: [] }
+        ],
+        leave: [
+          { code: "L202608250018", name: "请假申请-呈语-2026-08-25", applicant: "呈语（李群）", category: "带薪病假", start: "2026-08-25 10:00", end: "2026-08-26 18:00", total: "2 天", node: "HR 审核", status: "审批中", submitTime: "2026-08-25 09:12", submitter: "呈语（李群）", reason: "持续发热就医，已同步项目安排。", attachments: ["病假单.pdf", "就医记录.jpg"], approvals: [{ approver: "直属主管 远山", result: "审批通过", opinion: "已确认工作安排，同意。", time: "2026-08-25 10:04" }] },
+          { code: "L202608240012", name: "请假申请-呈语-2026-08-24", applicant: "呈语（李群）", category: "婚假", start: "2026-08-24 10:00", end: "2026-08-28 18:00", total: "5 天", node: "流程归档", status: "审批通过", submitTime: "2026-08-24 10:30", submitter: "呈语（李群）", reason: "首次婚假申请，已上传结婚登记证。审批通过后生成 10 天婚假额度，并扣除本次 5 天，剩余额度 5 天。", attachments: ["结婚登记证.jpg"], approvals: [{ approver: "直属主管 远山", result: "审批通过", opinion: "工作安排已确认，同意。", time: "2026-08-24 11:12" }, { approver: "HR 伙伴 苏木", result: "审批通过", opinion: "材料齐全，生成婚假额度 10 天，扣除本次 5 天。", time: "2026-08-24 15:20" }] },
+          { code: "L202608250006", name: "请假申请-修远-2026-09-01", applicant: "修远（陈璐）", category: "婚假", start: "2026-09-01 10:00", end: "2026-09-03 18:00", total: "3 天", node: "HR 审核", status: "审批拒绝", submitTime: "2026-08-25 08:35", submitter: "修远（陈璐）", reason: "婚假申请，需补充结婚登记证。", attachments: [], approvals: [{ approver: "直属主管 一禾", result: "审批通过", opinion: "同意休假安排。", time: "2026-08-25 09:16" }, { approver: "HR 伙伴 苏木", result: "审批拒绝", opinion: "缺少结婚登记证照片，请补充后重新提交。", time: "2026-08-25 11:02" }] },
+          { code: "L202608250022", name: "请假申请-青梧-2026-08-29", applicant: "青梧（孙佳）", category: "事假", start: "2026-08-29 10:00", end: "2026-08-29 18:00", total: "1 天", node: "已结束", status: "已撤回", submitTime: "2026-08-25 13:20", submitter: "青梧（孙佳）", reason: "个人事务取消，申请人撤回。", attachments: [], approvals: [] },
+          { code: "L202608240031", name: "请假申请-南亭-2026-08-26", applicant: "南亭（李宁）", category: "年假", start: "2026-08-26 10:00", end: "2026-08-27 18:00", total: "2 天", node: "流程归档", status: "审批通过", submitTime: "2026-08-24 15:42", submitter: "南亭（李宁）", reason: "家庭出行安排，年假余额充足。", attachments: [], approvals: [{ approver: "直属主管 云起", result: "审批通过", opinion: "工作交接已确认。", time: "2026-08-24 16:28" }, { approver: "HR 伙伴 苏木", result: "审批通过", opinion: "年假余额已锁定并归档。", time: "2026-08-24 17:10" }] },
+          { code: "L202608230014", name: "请假申请-鹿鸣-2026-08-28", applicant: "鹿鸣（高妍）", category: "产检假", start: "2026-08-28 10:00", end: "2026-08-28 14:00", total: "0.5 天", node: "HR 审核", status: "审批中", submitTime: "2026-08-23 10:18", submitter: "鹿鸣（高妍）", reason: "产检预约，已上传医院预约证明。", attachments: ["产检预约证明.jpg"], approvals: [{ approver: "直属主管 星河", result: "审批通过", opinion: "同意半天产检假。", time: "2026-08-23 11:05" }] }
+        ]
+      };
+
+      function statusTag(status) {
+        const cls = status === "已发布" || status === "已通过" || status === "审批通过" ? "green" : status === "审批拒绝" ? "red" : status === "已撤回" ? "" : status.includes("补充") || status === "草稿" || status === "审批中" ? "orange" : status === "待发布" ? "blue" : "orange";
+        return `<span class="tag ${cls}">${status}</span>`;
+      }
+
+      function statusClass(status) {
+        return status === "已发布" || status === "已通过" || status === "审批通过" ? "green" : status === "审批拒绝" ? "red" : status === "已撤回" ? "" : status.includes("补充") || status === "草稿" || status === "审批中" ? "orange" : status === "待发布" ? "blue" : "orange";
+      }
+
+      document.querySelector("#ruleTable").innerHTML = rules.map((rule, index) => `
+        <tr class="clickable" data-rule-index="${index}"><td><strong>${rule.name}</strong><div class="muted">${rule.quotaMode} / ${rule.unit}</div></td><td>${rule.durationMode}</td><td>${rule.grantMode}</td><td>${rule.validityRule}</td><td>${rule.scopeRule}</td><td>${rule.allowExtension}，${rule.extensionDuration}</td><td>${statusTag(rule.status)}</td><td class="num"><button class="btn" type="button">编辑</button></td></tr>
+      `).join("");
+
+      let currentAuditType = "overtime";
+      let currentAuditStatus = "全部";
+
+      function visibleAudits() {
+        return audits[currentAuditType].filter((item) => currentAuditStatus === "全部" || item.status === currentAuditStatus);
+      }
+
+      function rowActions(status) {
+        return status === "审批中"
+          ? `<button class="btn primary" type="button">审批</button>`
+          : `<button class="btn" type="button">查看</button>`;
+      }
+
+      function renderAuditTable(type) {
+        currentAuditType = type;
+        document.querySelector("#auditHead").innerHTML = `<tr>${auditColumns[type].map((column) => `<th>${column}</th>`).join("")}</tr>`;
+        document.querySelector("#auditTable").innerHTML = visibleAudits().map((item, index) => `
+          <tr class="clickable" data-audit-index="${index}">
+            <td><strong>${item.code}</strong></td>
+            <td>${item.name}</td>
+            <td>${item.applicant}</td>
+            <td>${item.category}</td>
+            <td>${item.start}</td>
+            <td>${item.end}</td>
+            <td>${item.total}</td>
+            <td>${item.node}</td>
+            <td>${statusTag(item.status)}</td>
+            <td>${item.submitTime}</td>
+            <td>${item.submitter}</td>
+            <td class="num"><div class="row-actions">${rowActions(item.status)}</div></td>
+          </tr>
+        `).join("");
+      }
+
+      renderAuditTable(currentAuditType);
+
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".tab").forEach((item) => item.classList.remove("active"));
+          document.querySelectorAll(".page").forEach((page) => page.classList.remove("active"));
+          tab.classList.add("active");
+          document.querySelector(`#${tab.dataset.page}`).classList.add("active");
+        });
+      });
+
+      const drawer = document.querySelector("#ruleDrawer");
+      const auditDrawer = document.querySelector("#auditDrawer");
+      const drawerMask = document.querySelector("#drawerMask");
+      function setSelectValue(id, value) {
+        const select = document.querySelector(id);
+        if ([...select.options].some((option) => option.value === value || option.textContent === value)) select.value = value;
+      }
+
+      function openRuleDrawer(rule) {
+        document.querySelector("#ruleName").value = rule.name;
+        setSelectValue("#quotaMode", rule.quotaMode);
+        setSelectValue("#ruleUnit", rule.unit);
+        setSelectValue("#durationMode", rule.durationMode);
+        document.querySelector("#minUnit").value = rule.minUnit;
+        setSelectValue("#grantMode", rule.grantMode);
+        document.querySelector("#validityRule").value = rule.validityRule;
+        setSelectValue("#scopeRule", rule.scopeRule);
+        setSelectValue("#allowExtension", rule.allowExtension);
+        document.querySelector("#extensionDuration").value = rule.extensionDuration;
+        setSelectValue("#quotaSource", rule.quotaSource);
+        document.querySelector("#proofRule").value = rule.proof || "单个文件最大 30M。";
+        document.querySelector("#memoRule").value = rule.memo;
+        drawer.classList.add("open");
+        drawerMask.classList.add("open");
+      }
+
+      function closeRuleDrawer() {
+        drawer.classList.remove("open");
+        auditDrawer.classList.remove("open");
+        drawerMask.classList.remove("open");
+      }
+
+      document.querySelector("#ruleTable").addEventListener("click", (event) => {
+        const row = event.target.closest("tr[data-rule-index]");
+        if (!row) return;
+        openRuleDrawer(rules[Number(row.dataset.ruleIndex)]);
+      });
+      document.querySelector("#closeDrawer").addEventListener("click", closeRuleDrawer);
+      drawerMask.addEventListener("click", closeRuleDrawer);
+
+      document.querySelectorAll(".sub-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".sub-tab").forEach((item) => item.classList.remove("active"));
+          tab.classList.add("active");
+          renderAuditTable(tab.dataset.auditType);
+        });
+      });
+
+      document.querySelectorAll(".status-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".status-tab").forEach((item) => item.classList.remove("active"));
+          tab.classList.add("active");
+          currentAuditStatus = tab.dataset.auditStatus;
+          renderAuditTable(currentAuditType);
+        });
+      });
+
+      function openAuditDrawer(item) {
+        document.querySelector("#auditApplicant").textContent = item.applicant;
+        document.querySelector("#auditCode").textContent = item.code;
+        document.querySelector("#auditName").textContent = item.name;
+        document.querySelector("#auditCategory").textContent = item.category;
+        document.querySelector("#auditStart").textContent = item.start;
+        document.querySelector("#auditEnd").textContent = item.end;
+        document.querySelector("#auditTotal").textContent = item.total;
+        document.querySelector("#auditState").innerHTML = statusTag(item.status);
+        document.querySelector("#auditSubmitTime").textContent = item.submitTime;
+        document.querySelector("#auditSubmitter").textContent = item.submitter;
+        document.querySelector("#auditReasonLabel").textContent = currentAuditType === "leave" ? "请假事由" : "申请事由";
+        document.querySelector("#auditReason").textContent = item.reason;
+        document.querySelector("#auditAttachmentList").innerHTML = item.attachments.length
+          ? item.attachments.map((file) => {
+              const ext = file.split(".").pop().toUpperCase();
+              return `<article class="attachment-card"><div class="attachment-preview">${ext}</div><div class="attachment-meta"><strong>${file}</strong><span>可在线预览</span></div></article>`;
+            }).join("")
+          : `<article class="attachment-card"><div class="attachment-preview">无</div><div class="attachment-meta"><strong>暂无附件</strong><span>申请人未上传附件</span></div></article>`;
+        document.querySelector("#auditTimeline").innerHTML = [
+          { approver: item.submitter, result: "已提交", opinion: item.reason, time: item.submitTime },
+          ...item.approvals
+        ].map((record) => `<li><strong>${record.approver}</strong>：${record.result}<br><span class="muted">${record.time} · ${record.opinion}</span></li>`).join("");
+        const canApprove = item.status === "审批中";
+        document.querySelector("#auditOpinionBlock").classList.toggle("hidden", !canApprove);
+        document.querySelector("#auditActionRow").classList.toggle("hidden", !canApprove);
+        auditDrawer.classList.add("open");
+        drawerMask.classList.add("open");
+      }
+
+      document.querySelector("#closeAuditDrawer").addEventListener("click", closeRuleDrawer);
+
+      document.querySelector("#auditTable").addEventListener("click", (event) => {
+        const row = event.target.closest("tr[data-audit-index]");
+        if (!row) return;
+        openAuditDrawer(visibleAudits()[Number(row.dataset.auditIndex)]);
+      });
+    </script>
+  </body>
+</html>
