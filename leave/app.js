@@ -1,7 +1,29 @@
 const noDefaultProofText = "单个文件最大 30M。";
 
+const chinaPublicHolidays2026 = new Set([
+  "2026-01-01", "2026-01-02", "2026-01-03",
+  "2026-02-15", "2026-02-16", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-21", "2026-02-22", "2026-02-23",
+  "2026-04-04", "2026-04-05", "2026-04-06",
+  "2026-05-01", "2026-05-02", "2026-05-03", "2026-05-04", "2026-05-05",
+  "2026-06-19", "2026-06-20", "2026-06-21",
+  "2026-09-25", "2026-09-26", "2026-09-27",
+  "2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04", "2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08"
+]);
+
+const chinaAdjustedWorkdays2026 = new Set([
+  "2026-02-14", "2026-02-28", "2026-05-09", "2026-09-20", "2026-10-10"
+]);
+
+const fixedWorkSchedule = {
+  start: "09:00",
+  lunchStart: "12:00",
+  lunchEnd: "13:00",
+  end: "18:00",
+  dailyHours: 8
+};
+
 const leaveRules = [
-  { name: "年假", quotaKey: "annual", requiresQuota: true, proof: "", memo: "可按 0.5 天为单位申请；半天请按 10:00-14:00 或 14:00-18:00 填写。" },
+  { name: "年假", quotaKey: "annual", requiresQuota: true, proof: "", memo: "按中国工作日历计算请假时长；固定工时制工作时间为 09:00-18:00，中间 12:00-13:00 休息。" },
   { name: "额外福利年假", quotaKey: "extraAnnual", requiresQuota: true, proof: "", memo: "使用前需确认福利年假额度已生效。" },
   { name: "带薪病假", quotaKey: "paidSick", requiresQuota: true, proof: "多天的带薪病假需要病假单或多天就医记录。", memo: "多天申请请同步上传医疗证明。" },
   { name: "特别奖励假", quotaKey: "reward", requiresQuota: true, proof: "请按奖励假来源补充证明。", memo: "额度由 EHR 或业务系统生成后可申请。" },
@@ -12,7 +34,7 @@ const leaveRules = [
   { name: "病假", quotaKey: null, requiresQuota: false, proof: "多天的病假请提供病假单或就医记录。", memo: "多天申请请同步上传医疗证明。" },
   { name: "婚假", quotaKey: "marriage", requiresQuota: true, proof: "首次申请婚假需上传结婚登记证等相关材料。", memo: "婚假为资格审批后生成额度。首次申请需提交相关材料，请假时长小于等于 10 天才能提交；审批通过后生成 10 天婚假额度，并扣除本次申请时长。再次申请只能使用剩余额度。", grantOnFirstApproval: true, firstGrantTotal: 10, qualificationDateLabel: "结婚日期", attachmentName: "结婚登记证.jpg" },
   { name: "产假", quotaKey: null, requiresQuota: false, proof: "产假请提交医院预产期证明及结婚证。", memo: "请按产假审批要求填写预计休假周期。" },
-  { name: "产检假", quotaKey: null, requiresQuota: false, proof: "产检假需要提供医院的预约证明。", memo: "半天假请按 10:00-14:00 或 14:00-18:00 填写。" },
+  { name: "产检假", quotaKey: null, requiresQuota: false, proof: "产检假需要提供医院的预约证明。", memo: "按中国工作日历和固定工时制工作时间计算请假时长。" },
   { name: "陪护假", quotaKey: "care", requiresQuota: true, proof: "首次申请陪护假需上传宝宝出生证明。", memo: "陪护假为资格审批后生成额度。首次申请需提交宝宝出生证明，请假时长小于等于 10 天才能提交；审批通过后生成 10 天陪护假额度，并扣除本次申请时长。再次申请只能使用剩余额度。", grantOnFirstApproval: true, firstGrantTotal: 10, qualificationDateLabel: "宝宝出生日期", attachmentName: "宝宝出生证明.jpg" },
   { name: "工伤假", quotaKey: null, requiresQuota: false, proof: "请提供工伤认定或相关证明。", memo: "请在事由中说明工伤认定进度。" },
   { name: "丧假", quotaKey: null, requiresQuota: false, proof: "请提供相关证明。", memo: "请在事由中说明亲属关系。" }
@@ -46,7 +68,7 @@ const holidayOvertimeRequirements = [
 
 const requestConfigs = {
   leave: { title: "请假申请", subtitle: "Leave application", titleValue: "请假申请-呈语-2026-08-24", reasonLabel: "请假事由", totalLabel: "合计（天）", unit: "天", showLeaveType: true, proof: "", memo: "" },
-  comp: { title: "调休申请", subtitle: "Compensatory leave application", titleValue: "调休申请-呈语-2026-08-24", reasonLabel: "调休事由", totalLabel: "统计时间（小时）", unit: "小时", showLeaveType: false, proof: "如审批要求可补充加班记录。", memo: "一天调休请填 10:00-18:00；上午半天 10:00-14:00；下午半天 14:00-18:00。" },
+  comp: { title: "调休申请", subtitle: "Compensatory leave application", titleValue: "调休申请-呈语-2026-08-24", reasonLabel: "调休事由", totalLabel: "统计时间（小时）", unit: "小时", showLeaveType: false, proof: "如审批要求可补充加班记录。", memo: "调休按固定工时制工作时间计算：09:00-18:00，中间 12:00-13:00 休息；非中国工作日不计入调休时长。" },
   overtime: { title: "加班申请", subtitle: "Overtime application", titleValue: "加班申请-呈语-2026-08-24", reasonLabel: "加班事项", totalLabel: "总计（小时）", unit: "小时", showLeaveType: false, proof: "需上传与加班时间匹配的考勤记录及邮件审批记录。", memo: overtimeRequirements },
   holidayOvertime: { title: "节假日加班申请", subtitle: "Holiday overtime application", titleValue: "节假日加班申请-呈语-2026-08-24", reasonLabel: "加班原因", totalLabel: "总计（小时）", unit: "小时", showLeaveType: false, proof: "需上传与加班时间匹配的考勤记录及邮件审批记录。", memo: holidayOvertimeRequirements }
 };
@@ -262,16 +284,105 @@ function updateFooterTotal(config) {
   elements.footerTotal.textContent = formatAmount(elements.totalInput.value || 0, config.unit);
 }
 
-function calculateLeaveDays() {
-  const startDate = new Date(`${elements.startDate.value}T00:00:00`);
-  const endDate = new Date(`${elements.endDate.value}T00:00:00`);
-  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate < startDate) return 0;
+function parseDateValue(value) {
+  if (!value) return null;
+  const normalized = value.includes("/") ? value.split("/").reverse().join("-") : value;
+  const date = new Date(`${normalized}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
-  const dayCount = Math.round((endDate - startDate) / 86400000) + 1;
-  const start = elements.startTime.value;
-  const end = elements.endTime.value;
-  if (dayCount === 1 && ((start === "10:00" && end === "14:00") || (start === "14:00" && end === "18:00"))) return 0.5;
-  return dayCount;
+function formatDateKey(date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function eachDate(startValue, endValue) {
+  const startDate = parseDateValue(startValue);
+  const endDate = parseDateValue(endValue);
+  if (!startDate || !endDate || endDate < startDate) return [];
+
+  const dates = [];
+  const cursor = new Date(startDate);
+  while (cursor <= endDate) {
+    dates.push(new Date(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return dates;
+}
+
+function minutesFromTime(time) {
+  const [hour, minute] = time.split(":").map(Number);
+  return hour * 60 + minute;
+}
+
+function hoursBetween(startTime, endTime) {
+  return Math.max(0, (minutesFromTime(endTime) - minutesFromTime(startTime)) / 60);
+}
+
+function overlapHours(startTime, endTime, windowStart, windowEnd) {
+  const start = Math.max(minutesFromTime(startTime), minutesFromTime(windowStart));
+  const end = Math.min(minutesFromTime(endTime), minutesFromTime(windowEnd));
+  return Math.max(0, (end - start) / 60);
+}
+
+function isChinaWorkday(date) {
+  const key = formatDateKey(date);
+  if (chinaPublicHolidays2026.has(key)) return false;
+  if (chinaAdjustedWorkdays2026.has(key)) return true;
+  const day = date.getDay();
+  return day >= 1 && day <= 5;
+}
+
+function isChinaPublicHoliday(date) {
+  return chinaPublicHolidays2026.has(formatDateKey(date));
+}
+
+function calculateWorkingHoursForDay(date, startTime, endTime) {
+  if (!isChinaWorkday(date)) return 0;
+  const morning = overlapHours(startTime, endTime, fixedWorkSchedule.start, fixedWorkSchedule.lunchStart);
+  const afternoon = overlapHours(startTime, endTime, fixedWorkSchedule.lunchEnd, fixedWorkSchedule.end);
+  return morning + afternoon;
+}
+
+function calculateWorkingHours(startValue, endValue, startTime, endTime) {
+  return eachDate(startValue, endValue).reduce((total, date) => total + calculateWorkingHoursForDay(date, startTime, endTime), 0);
+}
+
+function calculateBusinessLeaveDays(rule) {
+  return calculateWorkingHours(elements.startDate.value, elements.endDate.value, elements.startTime.value, elements.endTime.value) / fixedWorkSchedule.dailyHours;
+}
+
+function calculateNaturalLeaveDays() {
+  const dates = eachDate(elements.startDate.value, elements.endDate.value);
+  if (!dates.length) return 0;
+  return dates.length;
+}
+
+function calculateLeaveDays(rule = selectedLeaveRule()) {
+  if (rule.name === "产假") return calculateNaturalLeaveDays();
+  return calculateBusinessLeaveDays(rule);
+}
+
+function calculateOvertimeHours(requireHoliday = false) {
+  return eachDate(elements.startDate.value, elements.endDate.value).reduce((total, date) => {
+    const holiday = isChinaPublicHoliday(date);
+    if (requireHoliday && !holiday) return total;
+
+    const requested = hoursBetween(elements.startTime.value, elements.endTime.value);
+    const workHours = isChinaWorkday(date) ? calculateWorkingHoursForDay(date, elements.startTime.value, elements.endTime.value) : 0;
+    const overtime = requireHoliday || !isChinaWorkday(date) ? requested : Math.max(0, requested - workHours);
+    return total + Math.min(overtime, fixedWorkSchedule.dailyHours);
+  }, 0);
+}
+
+function isSingleDayOvertimeOverLimit() {
+  return hoursBetween(elements.startTime.value, elements.endTime.value) > fixedWorkSchedule.dailyHours;
+}
+
+function hasWorkdayWorkTimeOverlap() {
+  return eachDate(elements.startDate.value, elements.endDate.value).some((date) => calculateWorkingHoursForDay(date, elements.startTime.value, elements.endTime.value) > 0);
 }
 
 function updateAttachment(proof) {
@@ -300,8 +411,9 @@ function updateQualificationFields(rule) {
 
 function updateLeaveState(config) {
   elements.totalInput.readOnly = true;
-  elements.totalInput.value = calculateLeaveDays();
   const rule = selectedLeaveRule();
+  elements.totalLabel.textContent = rule.name === "产假" ? "合计（自然日）" : "合计（工作日）";
+  elements.totalInput.value = calculateLeaveDays(rule);
   const requested = Number(elements.totalInput.value || 0);
   const remaining = rule.quotaKey && quotas[rule.quotaKey] ? getRemaining(rule.quotaKey) : 0;
 
@@ -352,11 +464,15 @@ function updateLeaveState(config) {
 }
 
 function updateNonLeaveState(config) {
-  elements.totalInput.readOnly = false;
+  elements.totalInput.readOnly = true;
   elements.qualificationInfoFields.classList.add("is-hidden");
   elements.selectedQuotaCard.classList.add("is-hidden");
   updateAttachment(config.proof);
   setRequirement(`${config.title.replace("申请", "")}要求`, config.memo);
+
+  if (currentRequest === "comp") elements.totalInput.value = calculateWorkingHours(elements.startDate.value, elements.endDate.value, elements.startTime.value, elements.endTime.value);
+  if (currentRequest === "overtime") elements.totalInput.value = calculateOvertimeHours(false);
+  if (currentRequest === "holidayOvertime") elements.totalInput.value = calculateOvertimeHours(true);
   updateFooterTotal(config);
 
   const requested = Number(elements.totalInput.value || 0);
@@ -367,6 +483,26 @@ function updateNonLeaveState(config) {
 
   if ((currentRequest === "overtime" || currentRequest === "holidayOvertime") && requested > 36) {
     setBanner("伙伴每月加班时间总计不得超过 36 小时。", "danger");
+    return;
+  }
+
+  if (currentRequest === "overtime" && hasWorkdayWorkTimeOverlap()) {
+    setBanner("固定工时制下，工作日 09:00-18:00 不能申请加班，请选择18:00后或非工作日。", "danger");
+    return;
+  }
+
+  if (currentRequest === "overtime" && isSingleDayOvertimeOverLimit()) {
+    setBanner("单日加班最多 8 小时。", "danger");
+    return;
+  }
+
+  if (currentRequest === "holidayOvertime" && eachDate(elements.startDate.value, elements.endDate.value).some((date) => !isChinaPublicHoliday(date))) {
+    setBanner("法定节假日加班只能选择中国法定节假日。", "danger");
+    return;
+  }
+
+  if (currentRequest === "holidayOvertime" && isSingleDayOvertimeOverLimit()) {
+    setBanner("单日加班最多 8 小时。", "danger");
     return;
   }
 
@@ -395,9 +531,24 @@ function applyRequestType(type, leaveType) {
     if (isQualificationLeave(rule) && !hasQualificationQuota(rule) && !qualificationDialogConfirmed[rule.quotaKey]) showQualificationDialog(rule);
     updateLeaveState(config);
   } else {
-    if (type === "comp") elements.totalInput.value = "8";
-    if (type === "overtime") elements.totalInput.value = "3";
-    if (type === "holidayOvertime") elements.totalInput.value = "8";
+    if (type === "comp") {
+      elements.startDate.value = "2026-08-24";
+      elements.startTime.value = "09:00";
+      elements.endDate.value = "2026-08-24";
+      elements.endTime.value = "18:00";
+    }
+    if (type === "overtime") {
+      elements.startDate.value = "2026-08-29";
+      elements.startTime.value = "09:00";
+      elements.endDate.value = "2026-08-29";
+      elements.endTime.value = "18:00";
+    }
+    if (type === "holidayOvertime") {
+      elements.startDate.value = "2026-10-01";
+      elements.startTime.value = "09:00";
+      elements.endDate.value = "2026-10-01";
+      elements.endTime.value = "18:00";
+    }
     updateNonLeaveState(config);
   }
 
@@ -452,7 +603,7 @@ elements.confirmMarriageDialogBtn.addEventListener("click", () => {
   hideQualificationDialog();
   elements.titleInput.value = "请假申请-呈语-2026-08-24";
   elements.startDate.value = "2026-08-24";
-  elements.startTime.value = "10:00";
+  elements.startTime.value = "09:00";
   elements.endDate.value = "2026-08-28";
   elements.endTime.value = "18:00";
   elements.qualificationDateInput.value = rule.name === "婚假" ? "2026-08-20" : "2026-08-18";

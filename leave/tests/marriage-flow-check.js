@@ -33,5 +33,16 @@ assert(/isQualificationLeave/.test(app), "婚假、育儿假和陪护假应共�
 assert(!/familyInfoRequired/.test(app), "育儿假不应再使用单独维护家庭信息的阻断流程");
 assert(/approval-summary compact/.test(app), "首页审批摘要应使用紧凑两行展示");
 assert(!/审批人花名（本名）|拒绝人花名（本名）|当前节点<\/span>|节点名称<\/span>/.test(app), "首页审批摘要不应显示字段名称");
+assert(/chinaPublicHolidays2026/.test(app), "应内置 2026 中国法定节假日清单");
+assert(/chinaAdjustedWorkdays2026/.test(app), "应内置 2026 中国调休上班日清单");
+assert(/function isChinaWorkday/.test(app), "应提供中国工作日判断");
+assert(/function calculateBusinessLeaveDays/.test(app), "请假除产假应按工作日计算");
+assert(/function calculateNaturalLeaveDays/.test(app), "产假应按自然日计算");
+assert(/function calculateWorkingHours/.test(app), "调休应按固定工时工作时间计算");
+assert(/function calculateOvertimeHours/.test(app), "加班应按非工作时间计算");
+assert(/function hasWorkdayWorkTimeOverlap/.test(app), "普通加班应识别工作日工作时段重叠");
+assert(/法定节假日加班只能选择中国法定节假日/.test(app), "法定节假日加班应限制中国法定节假日");
+assert(/工作日 09:00-18:00 不能申请加班/.test(app), "普通加班应提示工作日工作时间不可选");
+assert(/单日加班最多 8 小时/.test(app), "加班应限制一天最多 8 小时");
 
 console.log("marriage flow assertions passed");
