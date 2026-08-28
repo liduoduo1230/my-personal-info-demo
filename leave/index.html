@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>员工自助 - 请假加班移动端 Demo</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="phone-shell">
+      <section id="homePage" class="app-page active-page" aria-label="请假加班首页">
+        <header class="mobile-nav">
+          <button class="icon-button" type="button" aria-label="返回">‹</button>
+          <div>
+            <h1>请假加班</h1>
+            <p>员工自助</p>
+          </div>
+          <button class="icon-button" type="button" aria-label="更多">···</button>
+        </header>
+
+        <section class="request-entry-card">
+          <div class="section-title-row">
+            <h2>发起申请</h2>
+          </div>
+          <div class="type-grid" role="tablist" aria-label="申请类型">
+            <button class="type-tile" type="button" data-request="leave"><span>休</span>请假申请</button>
+            <button class="type-tile" type="button" data-request="comp"><span>调</span>调休申请</button>
+            <button class="type-tile" type="button" data-request="overtime"><span>加</span>加班申请</button>
+            <button class="type-tile" type="button" data-request="holidayOvertime"><span>节</span>节假日加班</button>
+          </div>
+        </section>
+
+        <section class="quota-section" aria-label="假期额度">
+          <div class="section-title-row">
+            <h2>假期额度</h2>
+          </div>
+          <div id="quotaList" class="quota-list"></div>
+        </section>
+
+        <section class="request-record-section" aria-label="申请记录">
+          <div class="section-title-row">
+            <h2>申请记录</h2>
+          </div>
+          <div id="homeRequestList" class="home-request-list"></div>
+        </section>
+      </section>
+
+      <section id="applyPage" class="app-page" aria-label="申请页面">
+        <header class="mobile-nav">
+          <button class="icon-button" type="button" id="backHomeBtn" aria-label="返回">‹</button>
+          <div>
+            <h1 id="formTitle">请假申请</h1>
+            <p id="formSubtitle">Leave application</p>
+          </div>
+          <button class="icon-button" type="button" aria-label="更多">···</button>
+        </header>
+
+        <section class="employee-card compact-card">
+          <div>
+            <span class="eyebrow">申请人</span>
+            <h2>呈语（李群）</h2>
+            <p>部门：数智科技中心 / 集团管理数字化 / 集团管理产品</p>
+            <p>岗位：高级产品经理</p>
+            <div class="employee-tags" aria-label="员工标签">
+              <span>总部伙伴</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-card">
+          <form id="requestForm" class="mobile-form">
+            <label class="field">
+              <span>标题</span>
+              <input id="titleInput" type="text" value="请假申请-呈语-2026-08-24" />
+            </label>
+
+            <label class="field" id="leaveTypeField">
+              <span>假期类型</span>
+              <select id="leaveTypeSelect"></select>
+            </label>
+
+            <section id="qualificationInfoFields" class="marriage-info-fields is-hidden" aria-label="资格假材料信息">
+              <label class="field">
+                <span id="qualificationDateLabel">结婚日期</span>
+                <input id="qualificationDateInput" type="date" value="2026-08-20" />
+              </label>
+            </section>
+
+            <section id="selectedQuotaCard" class="selected-quota-card is-hidden" aria-label="当前假期额度">
+              <div class="quota-card-head">
+                <span>当前额度</span>
+                <strong id="selectedQuotaName">年假</strong>
+              </div>
+              <div class="quota-metrics">
+                <div><span>假期总数</span><strong id="quotaTotal">0天</strong></div>
+                <div><span>假期剩余</span><strong id="quotaRemaining">0天</strong></div>
+                <div><span>假期审批中</span><strong id="quotaPending">0天</strong></div>
+                <div><span>假期已用</span><strong id="quotaUsed">0天</strong></div>
+              </div>
+            </section>
+
+            <div class="time-card">
+              <div class="time-line">
+                <span class="dot start"></span>
+                <label class="field compact-field">
+                  <span>开始</span>
+                  <input id="startDate" type="date" value="2026-08-24" />
+                </label>
+                <label class="field compact-field">
+                  <span>时间</span>
+                  <select id="startTime"><option>10:00</option><option>14:00</option><option>18:00</option><option>19:00</option></select>
+                </label>
+              </div>
+              <div class="time-line">
+                <span class="dot end"></span>
+                <label class="field compact-field">
+                  <span>结束</span>
+                  <input id="endDate" type="date" value="2026-08-24" />
+                </label>
+                <label class="field compact-field">
+                  <span>时间</span>
+                  <select id="endTime"><option>18:00</option><option>14:00</option><option>19:00</option><option>22:00</option></select>
+                </label>
+              </div>
+            </div>
+
+            <label class="field total-field">
+              <span id="totalLabel">合计（天）</span>
+              <input id="totalInput" type="number" min="0" step="0.5" value="1" />
+            </label>
+
+            <div id="validationBanner" class="validation-banner" role="status"></div>
+
+            <label class="field">
+              <span id="reasonLabel">请假事由</span>
+              <textarea id="reasonInput" rows="4" placeholder="请输入申请原因、工作安排或补充说明。">家中事务处理，已同步项目安排。</textarea>
+            </label>
+
+            <section class="upload-row" aria-label="附件上传">
+              <div>
+                <strong>上传附件</strong>
+                <p id="attachmentText">单个文件最大 30M。</p>
+              </div>
+              <button class="small-button" type="button" id="uploadAttachmentBtn">上传</button>
+            </section>
+          </form>
+        </section>
+
+        <section id="requirementCard" class="requirement-card is-hidden">
+          <h2 id="requirementTitle">请假要求</h2>
+          <div class="requirement-stack">
+            <div>
+              <span>填写说明</span>
+              <div id="memoRule"></div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+    </main>
+
+    <footer id="submitBar" class="submit-bar is-hidden">
+      <div>
+        <span>当前合计</span>
+        <strong id="footerTotal">1 天</strong>
+      </div>
+      <button class="primary-button" type="button" id="submitBtn">提交申请</button>
+    </footer>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="marriageDialog" class="dialog-mask is-hidden" role="dialog" aria-modal="true" aria-labelledby="marriageDialogTitle">
+      <section class="dialog-card">
+        <h2 id="marriageDialogTitle">首次申请婚假</h2>
+        <p id="qualificationDialogText">首次申请婚假，请提交结婚登记材料，审批通过后将生成10天婚假额度，并扣除本次申请时长。</p>
+        <button class="primary-button dialog-confirm" type="button" id="confirmMarriageDialogBtn">确认</button>
+      </section>
+    </div>
+    <script src="./app.js?v=20260827-qualification-leave"></script>
+  </body>
+</html>

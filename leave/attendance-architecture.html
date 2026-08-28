@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>考勤系统架构图</title>
+    <style>
+      :root {
+        --brand-dark: #3b3431;
+        --brand-paper: #f7f6f3;
+        --brand-line: #d0d3d6;
+        --brand-gold: #b78f62;
+        --brand-gold-soft: #f5e8c8;
+        --text-secondary: #646a73;
+        --surface: #ffffff;
+        --info-soft: #f0f4ff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--brand-dark);
+        background: var(--brand-paper);
+        font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        min-height: 64px;
+        padding: 12px 20px;
+        color: #fff;
+        background: var(--brand-dark);
+        box-shadow: 0 8px 20px rgba(59, 52, 49, 0.16);
+      }
+
+      .title h1 {
+        margin: 0;
+        font-size: 18px;
+        line-height: 26px;
+      }
+
+      .title p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.68);
+        font-size: 12px;
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      button {
+        min-height: 34px;
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 6px;
+        padding: 0 12px;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.08);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .zoom-value {
+        min-width: 58px;
+        color: rgba(255, 255, 255, 0.82);
+        text-align: center;
+        font-size: 12px;
+      }
+
+      .canvas-shell {
+        height: calc(100vh - 64px);
+        overflow: auto;
+        padding: 24px;
+        cursor: grab;
+      }
+
+      .canvas-shell.dragging {
+        cursor: grabbing;
+        user-select: none;
+      }
+
+      .diagram-stage {
+        width: 1680px;
+        height: 1160px;
+        transform-origin: 0 0;
+      }
+
+      svg {
+        display: block;
+        width: 1680px;
+        height: 1160px;
+        border: 1px solid var(--brand-line);
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 12px 32px rgba(59, 52, 49, 0.12);
+      }
+
+      .layer-title {
+        font-size: 24px;
+        font-weight: 700;
+        fill: var(--brand-dark);
+      }
+
+      .node-title {
+        font-size: 16px;
+        font-weight: 700;
+        fill: #1f2329;
+      }
+
+      .node-sub {
+        font-size: 12px;
+        fill: var(--text-secondary);
+      }
+
+      .group-label {
+        font-size: 18px;
+        font-weight: 700;
+        fill: var(--brand-dark);
+      }
+
+      .hint {
+        font-size: 13px;
+        fill: var(--text-secondary);
+      }
+
+      @media (max-width: 720px) {
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .canvas-shell {
+          height: calc(100vh - 118px);
+          padding: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="title">
+        <h1>考勤系统架构图</h1>
+        <p>滚轮或按钮缩放，按住空白区域拖动查看</p>
+      </div>
+      <div class="toolbar" aria-label="缩放控制">
+        <button id="zoomOut" type="button">缩小</button>
+        <span id="zoomValue" class="zoom-value">100%</span>
+        <button id="zoomIn" type="button">放大</button>
+        <button id="reset" type="button">重置</button>
+      </div>
+    </header>
+
+    <main id="canvas" class="canvas-shell">
+      <div id="stage" class="diagram-stage">
+        <svg viewBox="0 0 1680 1160" role="img" aria-label="考勤系统架构图">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#8f959e" />
+            </marker>
+            <style>
+              .group { fill: #f8f7f5; stroke: #d0d3d6; stroke-width: 1.5; }
+              .node { fill: #ffffff; stroke: #d0d3d6; stroke-width: 1.5; rx: 8; }
+              .primary { fill: #fffaf0; stroke: #b78f62; }
+              .data { fill: #f0f4ff; stroke: #9eb6f7; }
+              .external { fill: #f7f7f7; stroke: #c8ccd1; }
+              .line { stroke: #8f959e; stroke-width: 1.6; fill: none; marker-end: url(#arrow); }
+              .strong-line { stroke: #b78f62; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+            </style>
+          </defs>
+
+          <text x="48" y="48" class="layer-title">考勤系统整体架构</text>
+          <text x="48" y="76" class="hint">覆盖员工移动端、HR 管理端、审批流、规则计算、假勤额度、薪资和 EHR 集成</text>
+
+          <rect class="group" x="48" y="110" width="1584" height="150" rx="12" />
+          <text x="72" y="145" class="group-label">用户入口层</text>
+          <rect class="node primary" x="92" y="170" width="260" height="58" />
+          <text x="112" y="194" class="node-title">员工移动端</text>
+          <text x="112" y="215" class="node-sub">打卡 / 请假 / 加班 / 调休 / 补卡</text>
+          <rect class="node" x="420" y="170" width="260" height="58" />
+          <text x="440" y="194" class="node-title">主管端</text>
+          <text x="440" y="215" class="node-sub">审批 / 团队考勤 / 异常确认</text>
+          <rect class="node" x="748" y="170" width="280" height="58" />
+          <text x="768" y="194" class="node-title">HR 管理后台</text>
+          <text x="768" y="215" class="node-sub">规则配置 / 月结 / 报表 / 归档</text>
+          <rect class="node" x="1096" y="170" width="260" height="58" />
+          <text x="1116" y="194" class="node-title">经营管理端</text>
+          <text x="1116" y="215" class="node-sub">组织人效 / 战区考勤分析</text>
+
+          <rect class="group" x="48" y="300" width="1584" height="126" rx="12" />
+          <text x="72" y="335" class="group-label">接入与安全层</text>
+          <rect class="node primary" x="250" y="356" width="280" height="48" />
+          <text x="270" y="385" class="node-title">API 网关</text>
+          <rect class="node" x="610" y="356" width="280" height="48" />
+          <text x="630" y="385" class="node-title">统一身份认证 SSO</text>
+          <rect class="node" x="970" y="356" width="280" height="48" />
+          <text x="990" y="385" class="node-title">权限与审计</text>
+
+          <rect class="group" x="48" y="466" width="1584" height="190" rx="12" />
+          <text x="72" y="501" class="group-label">业务应用层</text>
+          <rect class="node primary" x="92" y="530" width="250" height="78" />
+          <text x="112" y="556" class="node-title">考勤应用服务</text>
+          <text x="112" y="579" class="node-sub">打卡、补卡、异常、日结</text>
+          <rect class="node primary" x="386" y="530" width="250" height="78" />
+          <text x="406" y="556" class="node-title">假勤应用服务</text>
+          <text x="406" y="579" class="node-sub">请假、加班、调休、额度</text>
+          <rect class="node" x="680" y="530" width="250" height="78" />
+          <text x="700" y="556" class="node-title">审批流服务</text>
+          <text x="700" y="579" class="node-sub">流程编排、审批、归档</text>
+          <rect class="node" x="974" y="530" width="250" height="78" />
+          <text x="994" y="556" class="node-title">报表服务</text>
+          <text x="994" y="579" class="node-sub">月报、工时、异常、假期</text>
+          <rect class="node" x="1268" y="530" width="250" height="78" />
+          <text x="1288" y="556" class="node-title">消息通知服务</text>
+          <text x="1288" y="579" class="node-sub">飞书、企微、短信、邮件</text>
+
+          <rect class="group" x="48" y="696" width="1584" height="180" rx="12" />
+          <text x="72" y="731" class="group-label">核心能力层</text>
+          <rect class="node primary" x="130" y="758" width="280" height="70" />
+          <text x="150" y="784" class="node-title">考勤规则引擎</text>
+          <text x="150" y="806" class="node-sub">迟到、早退、缺卡、加班规则</text>
+          <rect class="node primary" x="470" y="758" width="280" height="70" />
+          <text x="490" y="784" class="node-title">排班与日历引擎</text>
+          <text x="490" y="806" class="node-sub">班次、工作日、法定节假日</text>
+          <rect class="node primary" x="810" y="758" width="280" height="70" />
+          <text x="830" y="784" class="node-title">假期额度引擎</text>
+          <text x="830" y="806" class="node-sub">年假、病假、育儿假、调休</text>
+          <rect class="node primary" x="1150" y="758" width="280" height="70" />
+          <text x="1170" y="784" class="node-title">考勤计算引擎</text>
+          <text x="1170" y="806" class="node-sub">日结、月结、重算、冲正</text>
+
+          <rect class="group" x="48" y="916" width="860" height="190" rx="12" />
+          <text x="72" y="951" class="group-label">数据层</text>
+          <rect class="node data" x="92" y="978" width="220" height="54" />
+          <text x="112" y="1011" class="node-title">考勤库</text>
+          <rect class="node data" x="342" y="978" width="220" height="54" />
+          <text x="362" y="1011" class="node-title">假勤库</text>
+          <rect class="node data" x="592" y="978" width="220" height="54" />
+          <text x="612" y="1011" class="node-title">规则配置库</text>
+          <rect class="node data" x="92" y="1050" width="220" height="54" />
+          <text x="112" y="1083" class="node-title">组织人员库</text>
+          <rect class="node data" x="342" y="1050" width="220" height="54" />
+          <text x="362" y="1083" class="node-title">附件存储</text>
+          <rect class="node data" x="592" y="1050" width="220" height="54" />
+          <text x="612" y="1083" class="node-title">缓存 / 规则快照</text>
+
+          <rect class="group" x="950" y="916" width="682" height="190" rx="12" />
+          <text x="974" y="951" class="group-label">外部系统集成</text>
+          <rect class="node external" x="994" y="978" width="180" height="54" />
+          <text x="1014" y="1011" class="node-title">EHR</text>
+          <rect class="node external" x="1202" y="978" width="180" height="54" />
+          <text x="1222" y="1011" class="node-title">OA 流程平台</text>
+          <rect class="node external" x="1410" y="978" width="180" height="54" />
+          <text x="1430" y="1011" class="node-title">考勤设备</text>
+          <rect class="node external" x="994" y="1050" width="180" height="54" />
+          <text x="1014" y="1083" class="node-title">节假日日历</text>
+          <rect class="node external" x="1202" y="1050" width="180" height="54" />
+          <text x="1222" y="1083" class="node-title">薪资系统</text>
+          <rect class="node external" x="1410" y="1050" width="180" height="54" />
+          <text x="1430" y="1083" class="node-title">BI / 数仓</text>
+
+          <path class="line" d="M222 228 V356" />
+          <path class="line" d="M550 228 V356" />
+          <path class="line" d="M888 228 V356" />
+          <path class="line" d="M1226 228 V356" />
+          <path class="line" d="M390 404 V530" />
+          <path class="line" d="M750 404 V530" />
+          <path class="line" d="M1110 404 V530" />
+
+          <path class="strong-line" d="M217 608 V758" />
+          <path class="strong-line" d="M511 608 V758" />
+          <path class="line" d="M805 608 V758" />
+          <path class="line" d="M1099 608 V758" />
+          <path class="line" d="M1393 608 C1393 650 1290 700 1290 758" />
+
+          <path class="line" d="M270 828 V978" />
+          <path class="line" d="M950 828 C950 890 452 910 452 978" />
+          <path class="line" d="M610 828 C610 900 702 910 702 978" />
+          <path class="line" d="M1290 828 C1290 890 702 900 702 1050" />
+
+          <path class="strong-line" d="M1084 978 C1084 880 950 870 950 828" />
+          <path class="line" d="M1292 978 C1292 900 805 870 805 608" />
+          <path class="strong-line" d="M1500 978 C1500 650 217 650 217 608" />
+          <path class="line" d="M1084 1050 C1084 900 610 890 610 828" />
+          <path class="strong-line" d="M1292 1050 C1292 900 1290 870 1290 828" />
+          <path class="line" d="M1500 1050 C1500 900 1099 860 1099 608" />
+        </svg>
+      </div>
+    </main>
+
+    <script>
+      const canvas = document.querySelector("#canvas");
+      const stage = document.querySelector("#stage");
+      const zoomValue = document.querySelector("#zoomValue");
+      let scale = 1;
+      let dragging = false;
+      let startX = 0;
+      let startY = 0;
+      let scrollLeft = 0;
+      let scrollTop = 0;
+
+      function setZoom(nextScale) {
+        scale = Math.min(2.4, Math.max(0.45, nextScale));
+        stage.style.transform = `scale(${scale})`;
+        stage.style.width = `${1680 * scale}px`;
+        stage.style.height = `${1160 * scale}px`;
+        zoomValue.textContent = `${Math.round(scale * 100)}%`;
+      }
+
+      document.querySelector("#zoomIn").addEventListener("click", () => setZoom(scale + 0.15));
+      document.querySelector("#zoomOut").addEventListener("click", () => setZoom(scale - 0.15));
+      document.querySelector("#reset").addEventListener("click", () => {
+        setZoom(1);
+        canvas.scrollTo({ left: 0, top: 0, behavior: "smooth" });
+      });
+
+      canvas.addEventListener("wheel", (event) => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        event.preventDefault();
+        setZoom(scale + (event.deltaY < 0 ? 0.12 : -0.12));
+      }, { passive: false });
+
+      canvas.addEventListener("mousedown", (event) => {
+        dragging = true;
+        canvas.classList.add("dragging");
+        startX = event.pageX;
+        startY = event.pageY;
+        scrollLeft = canvas.scrollLeft;
+        scrollTop = canvas.scrollTop;
+      });
+
+      window.addEventListener("mouseup", () => {
+        dragging = false;
+        canvas.classList.remove("dragging");
+      });
+
+      canvas.addEventListener("mousemove", (event) => {
+        if (!dragging) return;
+        canvas.scrollLeft = scrollLeft - (event.pageX - startX);
+        canvas.scrollTop = scrollTop - (event.pageY - startY);
+      });
+
+      setZoom(1);
+    </script>
+  </body>
+</html>
