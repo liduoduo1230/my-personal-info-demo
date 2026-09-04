@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>员工自助 - 请假加班移动端 Demo</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260904-period-layout" />
   </head>
   <body>
     <main class="phone-shell">
@@ -15,7 +15,7 @@
             <h1>请假加班</h1>
             <p>员工自助</p>
           </div>
-          <button class="icon-button" type="button" aria-label="更多">···</button>
+          <button class="icon-button" type="button" id="approvalMenuBtn" aria-label="审批">审</button>
         </header>
 
         <section class="request-entry-card">
@@ -76,7 +76,7 @@
 
             <label class="field" id="leaveTypeField">
               <span>假期类型</span>
-              <select id="leaveTypeSelect"></select>
+              <select id="leaveTypeSelect" required></select>
             </label>
 
             <section id="qualificationInfoFields" class="marriage-info-fields is-hidden" aria-label="资格假材料信息">
@@ -99,6 +99,35 @@
               </div>
             </section>
 
+            <section id="leavePeriodCard" class="leave-period-card is-hidden" aria-label="请假时段">
+              <div class="period-line">
+                <span class="dot start"></span>
+                <div class="paired-fields">
+                  <label class="field compact-field">
+                    <span>开始日期</span>
+                    <input id="leaveStartDate" type="date" value="2026-08-24" required />
+                  </label>
+                  <label class="field compact-field">
+                    <span>开始时段</span>
+                    <select id="leaveStartPeriod"><option value="am">上午</option><option value="pm">下午</option></select>
+                  </label>
+                </div>
+              </div>
+              <div class="period-line">
+                <span class="dot end"></span>
+                <div class="paired-fields">
+                  <label class="field compact-field">
+                    <span>结束日期</span>
+                    <input id="leaveEndDate" type="date" value="2026-08-24" required />
+                  </label>
+                  <label class="field compact-field">
+                    <span>结束时段</span>
+                    <select id="leaveEndPeriod"><option value="am">上午</option><option value="pm" selected>下午</option></select>
+                  </label>
+                </div>
+              </div>
+            </section>
+
             <div class="time-card">
               <div class="time-line">
                 <span class="dot start"></span>
@@ -108,7 +137,7 @@
                 </label>
                 <label class="field compact-field">
                   <span>时间</span>
-                  <select id="startTime"><option>10:00</option><option>14:00</option><option>18:00</option><option>19:00</option></select>
+                  <select id="startTime"><option>09:00</option><option>10:00</option><option>11:00</option><option>13:00</option><option>14:00</option><option>15:00</option><option>16:00</option><option>17:00</option></select>
                 </label>
               </div>
               <div class="time-line">
@@ -119,10 +148,25 @@
                 </label>
                 <label class="field compact-field">
                   <span>时间</span>
-                  <select id="endTime"><option>18:00</option><option>14:00</option><option>19:00</option><option>22:00</option></select>
+                  <select id="endTime"><option>10:00</option><option>11:00</option><option>12:00</option><option>14:00</option><option>15:00</option><option>16:00</option><option>17:00</option><option selected>18:00</option></select>
                 </label>
               </div>
             </div>
+
+            <section id="overtimeSegmentsCard" class="overtime-segments-card is-hidden" aria-label="加班明细">
+              <div class="segments-head">
+                <strong id="overtimeSegmentsTitle">加班明细</strong>
+                <button id="addOvertimeSegmentBtn" class="small-button" type="button" data-segment-action="add">新增</button>
+              </div>
+              <div id="overtimeSegmentsList" class="overtime-segments-list"></div>
+            </section>
+
+            <section id="attendanceRecordsCard" class="attendance-records-card is-hidden" aria-label="考勤记录">
+              <div class="segments-head">
+                <strong>考勤记录</strong>
+              </div>
+              <div id="attendanceRecordsList" class="attendance-records-list"></div>
+            </section>
 
             <label class="field total-field">
               <span id="totalLabel">合计（天）</span>
@@ -157,6 +201,38 @@
         </section>
       </section>
 
+      <section id="requestDetailPage" class="app-page" aria-label="申请详情">
+        <header class="mobile-nav">
+          <button class="icon-button" type="button" id="backFromRequestDetailBtn" aria-label="返回">‹</button>
+          <div>
+            <h1 id="requestDetailPageTitle">申请详情</h1>
+            <p>只读详情</p>
+          </div>
+          <span></span>
+        </header>
+        <section id="requestDetailPageBody" class="detail-card request-detail-page-body"></section>
+      </section>
+
+      <section id="approvalPage" class="app-page" aria-label="请假加班审批">
+        <header class="mobile-nav">
+          <button class="icon-button" type="button" id="backFromApprovalBtn" aria-label="返回">‹</button>
+          <div>
+            <h1>请假加班审批</h1>
+            <p>待办单据</p>
+          </div>
+          <span></span>
+        </header>
+        <section class="approval-page-content">
+          <nav class="approval-tabs" aria-label="审批类型">
+            <button type="button" class="approval-tab active" data-approval-tab="leave">请假</button>
+            <button type="button" class="approval-tab" data-approval-tab="comp">调休</button>
+            <button type="button" class="approval-tab" data-approval-tab="overtime">加班</button>
+            <button type="button" class="approval-tab" data-approval-tab="holidayOvertime">节假日加班</button>
+          </nav>
+          <div id="approvalList" class="approval-list"></div>
+        </section>
+      </section>
+
     </main>
 
     <footer id="submitBar" class="submit-bar is-hidden">
@@ -168,6 +244,16 @@
     </footer>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="requestDetailDialog" class="dialog-mask is-hidden" role="dialog" aria-modal="true" aria-labelledby="requestDetailTitle">
+      <section class="dialog-card request-detail-card">
+        <div class="detail-dialog-head">
+          <h2 id="requestDetailTitle">申请详情</h2>
+          <button class="icon-button" type="button" id="closeRequestDetailBtn" aria-label="关闭">×</button>
+        </div>
+        <div id="requestDetailBody" class="request-detail-body"></div>
+        <div id="requestDetailActions" class="request-detail-actions"></div>
+      </section>
+    </div>
     <div id="marriageDialog" class="dialog-mask is-hidden" role="dialog" aria-modal="true" aria-labelledby="marriageDialogTitle">
       <section class="dialog-card">
         <h2 id="marriageDialogTitle">首次申请婚假</h2>
@@ -175,6 +261,6 @@
         <button class="primary-button dialog-confirm" type="button" id="confirmMarriageDialogBtn">确认</button>
       </section>
     </div>
-    <script src="./app.js?v=20260827-qualification-leave"></script>
+    <script src="./app.js?v=20260904-period-layout"></script>
   </body>
 </html>
