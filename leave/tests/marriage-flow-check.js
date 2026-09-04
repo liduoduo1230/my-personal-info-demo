@@ -4,6 +4,9 @@ const path = require("path");
 const root = path.resolve(__dirname, "..");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+const periodLineRules = styles.match(/\.period-line\s*\{([\s\S]*?)\}/g) || [];
+const resetOvertimeFunction = app.match(/function resetOvertimeSegments\(type\)\s*\{([\s\S]*?)\n\}/)?.[1] || "";
 
 function assert(condition, message) {
   if (!condition) {
@@ -39,6 +42,8 @@ assert(/chinaAdjustedWorkdays2026/.test(app), "应内置 2026 中国调休上班
 assert(/function isChinaWorkday/.test(app), "应提供中国工作日判断");
 assert(/function calculateBusinessLeaveDays/.test(app), "请假除产假应按工作日计算");
 assert(/leavePeriodCard/.test(html), "请假申请应使用日期和上午下午时段，不应要求用户选择具体时间");
+assert(/paired-fields/.test(html), "日期和时段字段应并排显示");
+assert(periodLineRules.some((rule) => /grid-template-columns:\s*16px minmax\(0, 1fr\);/.test(rule)), "请假日期时段行不应保留空白第三列");
 assert(/function calculateLeavePeriodDays/.test(app), "请假时长应按开始结束时段计算半天单位");
 assert(/function renderLeavePeriodMode/.test(app), "请假模式应隐藏具体时间选择并显示时段选择");
 assert(/dateOnlyLeaveTypes/.test(app), "丧假和产假应只选择日期");
@@ -83,6 +88,10 @@ assert(/附件/.test(app) && /renderRequestAttachments/.test(app), "申请详情
 assert(/reason:/.test(app), "申请记录应保存并展示请假事由");
 assert(!/elements\.requestDetailActions\.innerHTML = canWithdrawRequest/.test(app), "只读申请详情页不应显示撤回操作");
 assert(/overtimeSegmentsCard/.test(html), "加班申请应显示明细模块，节假日加班应显示单条时段模块");
+assert(/function isOvertimeRequest\(\)[\s\S]*currentRequest === "comp"/.test(app), "调休应与加班一样进入多记录时段模式");
+assert(/function resetOvertimeSegments\(type\)[\s\S]*type === "comp"/.test(app), "调休应初始化多条时段记录");
+assert(/if \(type === "comp"\)[\s\S]*2026-08-24/.test(resetOvertimeFunction), "调休默认记录应使用工作日");
+assert(/if \(currentRequest === "comp"\) elements\.totalInput\.value = calculateOvertimeSegmentsTotal\(\)/.test(app), "调休总时长应由多条记录汇总");
 assert(/function renderOvertimeSegments/.test(app), "加班应支持多条开始结束时间记录，节假日加班应渲染单条时段记录");
 assert(/function calculateOvertimeSegmentsTotal/.test(app), "普通加班总时长应由多条记录汇总");
 assert(/function isHolidayOvertimeRequest/.test(app), "节假日加班应有单独判断以限制为单记录");
@@ -112,7 +121,7 @@ assert(/下班打卡/.test(app), "考勤记录应显示下班打卡");
 assert(/工作时长/.test(app), "考勤记录应显示工作时长");
 assert(!/休息日打卡/.test(app), "休息日考勤记录不应显示休息日打卡");
 assert(/approvalPage/.test(html) && /审批/.test(html), "应新增请假加班审批菜单和审批页面");
-assert(/approval-tabs/.test(html) && /data-approval-tab="leave"/.test(html) && /data-approval-tab="comp"/.test(html) && /data-approval-tab="overtime"/.test(html), "审批页面应按请假、调休、加班分 Tab");
+assert(/approval-tabs/.test(html) && /data-approval-tab="leave"/.test(html) && /data-approval-tab="comp"/.test(html) && /data-approval-tab="overtime"/.test(html) && /data-approval-tab="holidayOvertime"/.test(html), "审批页面应按请假、调休、加班、节假日加班分 Tab");
 assert(/function renderApprovalList/.test(app) && /function openApprovalDetail/.test(app), "审批页面应渲染列表并打开审核详情");
 assert(/requestDetailPage/.test(html) && /showPage\("requestDetail"\)/.test(app), "申请记录详情应跳转到独立详情页");
 

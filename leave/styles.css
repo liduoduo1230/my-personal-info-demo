@@ -432,9 +432,27 @@ p {
 .time-line,
 .period-line {
   display: grid;
-  grid-template-columns: 16px minmax(0, 1fr) 96px;
   gap: 8px;
   align-items: end;
+}
+
+.time-line {
+  grid-template-columns: 16px minmax(0, 1fr) 96px;
+}
+
+.period-line {
+  grid-template-columns: 16px minmax(0, 1fr);
+}
+
+.paired-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  min-width: 0;
+}
+
+.paired-fields .compact-field {
+  min-width: 0;
 }
 
 .dot {

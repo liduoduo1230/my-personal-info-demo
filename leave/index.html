@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>员工自助 - 请假加班移动端 Demo</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260904-period-layout" />
   </head>
   <body>
     <main class="phone-shell">
@@ -102,25 +102,29 @@
             <section id="leavePeriodCard" class="leave-period-card is-hidden" aria-label="请假时段">
               <div class="period-line">
                 <span class="dot start"></span>
-                <label class="field compact-field">
-                  <span>开始日期</span>
-                  <input id="leaveStartDate" type="date" value="2026-08-24" required />
-                </label>
-                <label class="field compact-field">
-                  <span>开始时段</span>
-                  <select id="leaveStartPeriod"><option value="am">上午</option><option value="pm">下午</option></select>
-                </label>
+                <div class="paired-fields">
+                  <label class="field compact-field">
+                    <span>开始日期</span>
+                    <input id="leaveStartDate" type="date" value="2026-08-24" required />
+                  </label>
+                  <label class="field compact-field">
+                    <span>开始时段</span>
+                    <select id="leaveStartPeriod"><option value="am">上午</option><option value="pm">下午</option></select>
+                  </label>
+                </div>
               </div>
               <div class="period-line">
                 <span class="dot end"></span>
-                <label class="field compact-field">
-                  <span>结束日期</span>
-                  <input id="leaveEndDate" type="date" value="2026-08-24" required />
-                </label>
-                <label class="field compact-field">
-                  <span>结束时段</span>
-                  <select id="leaveEndPeriod"><option value="am">上午</option><option value="pm" selected>下午</option></select>
-                </label>
+                <div class="paired-fields">
+                  <label class="field compact-field">
+                    <span>结束日期</span>
+                    <input id="leaveEndDate" type="date" value="2026-08-24" required />
+                  </label>
+                  <label class="field compact-field">
+                    <span>结束时段</span>
+                    <select id="leaveEndPeriod"><option value="am">上午</option><option value="pm" selected>下午</option></select>
+                  </label>
+                </div>
               </div>
             </section>
 
@@ -223,6 +227,7 @@
             <button type="button" class="approval-tab active" data-approval-tab="leave">请假</button>
             <button type="button" class="approval-tab" data-approval-tab="comp">调休</button>
             <button type="button" class="approval-tab" data-approval-tab="overtime">加班</button>
+            <button type="button" class="approval-tab" data-approval-tab="holidayOvertime">节假日加班</button>
           </nav>
           <div id="approvalList" class="approval-list"></div>
         </section>
@@ -256,6 +261,6 @@
         <button class="primary-button dialog-confirm" type="button" id="confirmMarriageDialogBtn">确认</button>
       </section>
     </div>
-    <script src="./app.js?v=20260902-remove-breastfeeding"></script>
+    <script src="./app.js?v=20260904-period-layout"></script>
   </body>
 </html>

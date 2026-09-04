@@ -470,11 +470,11 @@ const approvalRequests = [
   { ...myRequests[0], type: "leave", name: "请假申请-呈语-2026-08-25", category: "带薪病假", applicant: "呈语（李群）", submitter: "呈语（李群）" },
   { ...myRequests[1], type: "comp", name: "调休申请-呈语-2026-08-27", category: "调休", applicant: "呈语（李群）", submitter: "呈语（李群）" },
   { ...myRequests[2], type: "overtime", name: "加班申请-呈语-2026-08-23", category: "加班", applicant: "呈语（李群）", submitter: "呈语（李群）" },
-  { code: "H202608260006", name: "节假日加班申请-林川-2026-08-26", type: "overtime", category: "节假日加班", start: "2026-10-01 上午", end: "2026-10-01 下午", total: "8小时", status: "审批中", node: "部门负责人审批", nodeName: "部门负责人审批", applicant: "林川（周林）", submitter: "林川（周林）", approver: "景初（赵磊）", approverPosition: "部门负责人", submitTime: "2026-08-26 16:08", reason: "国庆期间客户项目保障", progress: ["提交申请"] }
+  { code: "H202608260006", name: "节假日加班申请-林川-2026-08-26", type: "holidayOvertime", category: "节假日加班", start: "2026-10-01 上午", end: "2026-10-01 下午", total: "8小时", status: "审批中", node: "部门负责人审批", nodeName: "部门负责人审批", applicant: "林川（周林）", submitter: "林川（周林）", approver: "景初（赵磊）", approverPosition: "部门负责人", submitTime: "2026-08-26 16:08", reason: "国庆期间客户项目保障", progress: ["提交申请"] }
 ];
 
 function approvalTabLabel(tab) {
-  return tab === "leave" ? "请假" : tab === "comp" ? "调休" : "加班";
+  return tab === "leave" ? "请假" : tab === "comp" ? "调休" : tab === "overtime" ? "加班" : "节假日加班";
 }
 
 function renderApprovalList() {
@@ -703,7 +703,7 @@ function calculateOvertimeHours(requireHoliday = false, startValue = elements.st
 }
 
 function isOvertimeRequest() {
-  return currentRequest === "overtime" || currentRequest === "holidayOvertime";
+  return currentRequest === "overtime" || currentRequest === "holidayOvertime" || currentRequest === "comp";
 }
 
 function isHolidayOvertimeRequest() {
@@ -719,14 +719,25 @@ function createHolidayOvertimeSegment(startDate, startPeriod, endDate, endPeriod
 }
 
 function resetOvertimeSegments(type) {
-  overtimeSegments = type === "holidayOvertime"
-    ? [
-        createHolidayOvertimeSegment("2026-10-01", "am", "2026-10-01", "pm")
-      ]
-    : [
-        createOvertimeSegment("2026-08-29", "09:00", "2026-08-29", "12:00"),
-        createOvertimeSegment("2026-08-29", "13:00", "2026-08-29", "18:00")
-      ];
+  if (type === "holidayOvertime") {
+    overtimeSegments = [
+      createHolidayOvertimeSegment("2026-10-01", "am", "2026-10-01", "pm")
+    ];
+    return;
+  }
+
+  if (type === "comp") {
+    overtimeSegments = [
+      createOvertimeSegment("2026-08-24", "09:00", "2026-08-24", "12:00"),
+      createOvertimeSegment("2026-08-24", "13:00", "2026-08-24", "18:00")
+    ];
+    return;
+  }
+
+  overtimeSegments = [
+    createOvertimeSegment("2026-08-29", "09:00", "2026-08-29", "12:00"),
+    createOvertimeSegment("2026-08-29", "13:00", "2026-08-29", "18:00")
+  ];
 }
 
 function getHolidayPeriodTime(period, point) {
@@ -761,6 +772,7 @@ function hasHolidayOvertimeDailyLimit() {
 }
 
 function calculateOvertimeSegmentHours(segment, requireHoliday = currentRequest === "holidayOvertime") {
+  if (currentRequest === "comp") return calculateWorkingHours(segment.startDate, segment.endDate, segment.startTime, segment.endTime);
   if (requireHoliday && segment.startPeriod && segment.endPeriod) return calculateHolidayOvertimePeriodHours(segment);
   return calculateOvertimeHours(requireHoliday, segment.startDate, segment.endDate, segment.startTime, segment.endTime);
 }
@@ -884,7 +896,7 @@ function renderAttendanceRecordDetail(record) {
 }
 
 function renderAttendanceRecords() {
-  const show = isOvertimeRequest() && overtimeSegments.length > 0;
+  const show = (currentRequest === "overtime" || currentRequest === "holidayOvertime") && overtimeSegments.length > 0;
   elements.attendanceRecordsCard.classList.toggle("is-hidden", !show);
   if (!show) return;
 
@@ -905,7 +917,7 @@ function renderAttendanceRecords() {
 function renderOvertimeSegments() {
   elements.overtimeSegmentsCard.classList.toggle("is-hidden", !isOvertimeRequest());
   elements.addOvertimeSegmentBtn.classList.toggle("is-hidden", isHolidayOvertimeRequest());
-  elements.overtimeSegmentsTitle.textContent = isHolidayOvertimeRequest() ? "节假日加班时段" : "加班明细";
+  elements.overtimeSegmentsTitle.textContent = isHolidayOvertimeRequest() ? "节假日加班时段" : currentRequest === "comp" ? "调休明细" : "加班明细";
   if (!isOvertimeRequest()) {
     renderAttendanceRecords();
     return;
@@ -1153,7 +1165,7 @@ function updateNonLeaveState(config) {
   updateAttachment(config.proof);
   setRequirement(`${config.title.replace("申请", "")}要求`, config.memo);
 
-  if (currentRequest === "comp") elements.totalInput.value = calculateWorkingHours(elements.startDate.value, elements.endDate.value, elements.startTime.value, elements.endTime.value);
+  if (currentRequest === "comp") elements.totalInput.value = calculateOvertimeSegmentsTotal();
   if (currentRequest === "overtime" || currentRequest === "holidayOvertime") elements.totalInput.value = calculateOvertimeSegmentsTotal();
   updateFooterTotal(config);
 
@@ -1239,6 +1251,7 @@ function applyRequestType(type, leaveType) {
       elements.startTime.value = "09:00";
       elements.endDate.value = "2026-08-24";
       elements.endTime.value = "18:00";
+      resetOvertimeSegments(type);
     }
     if (type === "overtime") {
       elements.startDate.value = "2026-08-29";
@@ -1356,7 +1369,9 @@ elements.overtimeSegmentsCard.addEventListener("click", (event) => {
   if (!action) return;
   if (action.dataset.segmentAction === "add") {
     if (isHolidayOvertimeRequest()) return;
-    const template = createOvertimeSegment("2026-08-29", "18:00", "2026-08-29", "20:00");
+    const template = currentRequest === "comp"
+      ? createOvertimeSegment("2026-08-24", "09:00", "2026-08-24", "10:00")
+      : createOvertimeSegment("2026-08-29", "18:00", "2026-08-29", "20:00");
     overtimeSegments.push(template);
     refreshState();
   }
